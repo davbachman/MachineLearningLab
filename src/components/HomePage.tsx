@@ -55,7 +55,7 @@ export function HomePage({ assignments }: HomePageProps) {
         </header>
 
         <section className="assignments-grid">
-          {states.map(({ assignment, state, resolved, complete }) => (
+          {states.map(({ assignment, state, resolved, complete }, index) => (
             <article key={assignment.id} className="assignment-card">
               <div>
                 <div className="assignment-meta">
@@ -64,7 +64,9 @@ export function HomePage({ assignments }: HomePageProps) {
                     {resolved} / {assignment.questions.length} resolved
                   </span>
                 </div>
-                <h2>{assignment.title}</h2>
+                <h2>
+                  {index + 1}. {assignment.title}
+                </h2>
                 <p className="assignment-subtitle">{assignment.description}</p>
               </div>
 

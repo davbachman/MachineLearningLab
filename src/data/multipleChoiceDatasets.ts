@@ -4,6 +4,7 @@ import { assignPointsToCentroids } from '../lib/kmeansMath'
 export interface MultipleChoiceTableDataset {
   id: string
   kind: 'table'
+  title?: string
   headers: string[]
   rows: Array<Array<string | number>>
   caption: string
@@ -97,6 +98,19 @@ const metricPoints: Vec2[] = [
 ]
 
 export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
+  numpyMiniArrays: {
+    id: 'numpyMiniArrays',
+    kind: 'table',
+    title: 'Arrays used in these questions',
+    headers: ['Name', 'NumPy definition'],
+    rows: [
+      ['y', 'np.arange(1, 13)'],
+      ['Y', 'y.reshape((3, 4))'],
+      ['X', 'np.ones((3, 4))'],
+    ],
+    caption:
+      'Assume these statements run from top to bottom. NumPy uses zero-based indexing, and reshape preserves the order of the values.',
+  },
   housePrices: {
     id: 'housePrices',
     kind: 'table',

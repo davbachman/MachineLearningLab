@@ -1,5 +1,18 @@
 import { defineCodeLabQuestion, type CodeLabQuestionSpec } from '../lib/codeLab'
 
+const numpyNotebookCode = `import numpy as np
+
+X = np.ones((100, 10))  # S1
+y = np.arange(1, 1001)  # S2
+Y = y.reshape((100, 10))  # S3
+z = y[:, np.newaxis]  # S4
+A = Y[0:5, 2:6]  # S5
+b = Y[(Y % 3 == 0) & (Y > 20) & (Y < 70)]  # S6
+Z = np.sqrt(Y) + X  # S7
+m = Y.max(axis=0)  # S8
+s = Y.sum(axis=1)  # S9
+P = np.matmul(X, Y.T)  # S10`
+
 const pcaCode = `import numpy as np
 
 class PCA():
@@ -154,6 +167,179 @@ class RandomForestClassifier():
             tree, feats = self.trees[i]
             preds.append(tree.predict(x[np.newaxis, feats])[0])  # S6
         return np.bincount(np.array(preds)).argmax()  # S7`
+
+export const numpyNotebookLab = defineCodeLabQuestion({
+  id: 'numpy-notebook-lab',
+  kind: 'codeLab',
+  title: 'Notebook Lab: Trace the NumPy Arrays',
+  prompt:
+    'Use the completed `0Numpy.ipynb` notebook to answer questions about its array construction, slicing, Boolean masks, reductions, and matrix multiplication.',
+  instructions:
+    'The code below reproduces the completed notebook cells in their original order, with statement labels added for reference. Read each expression using NumPy row and column conventions.',
+  datasetId: 'numpy-notebook-v1',
+  variantId: 'numpy-notebook-v1',
+  language: 'python',
+  code: numpyNotebookCode,
+  fixtureTitle: 'Notebook execution context',
+  fixtureHeading: 'Execution rule',
+  fixture: `# Run S1 through S10 once, from top to bottom.
+# No variables are reassigned after S10.`,
+  invocationTitle: 'Expressions to trace',
+  invocationLead: 'After the notebook cells S1 through S10 run, Python evaluates:',
+  invocation: `array_shape = Y.shape
+column_shape = z.shape
+slice_value = A[3, 3]
+filtered_values = b.tolist()
+summary = (Z[5, 5], m[5], s[5])
+matrix_summary = (P.shape, P[5, 5])`,
+  hintSchedule: [2, 4, 6],
+  hints: [
+    '`reshape` fills rows from the one-dimensional array in order, while `np.newaxis` adds a length-one dimension without changing the values.',
+    'The two coordinates in `A[3, 3]` are relative to the sliced array `A`, not to the original array `Y`.',
+    'For S10, write the two matrix shapes after applying `.T`, then match the inner dimensions before calculating an entry.',
+  ],
+  stages: [
+    {
+      id: 'TRACE',
+      kind: 'executionTrace',
+      title: '1. Trace the completed notebook',
+      prompt: 'Mentally execute the displayed expressions after running S1 through S10.',
+      successCopy:
+        'Correct: reshaping preserves the value order, the mask retains the multiples of three from 21 through 69, and each entry in row 5 of P is a dot product with one row of Y.',
+      fields: [
+        {
+          id: 'ARRAY_SHAPE',
+          label: 'array_shape',
+          correctOptionId: 'SHAPE_100_10',
+          options: [
+            { id: 'SHAPE_100_10', label: '(100, 10)' },
+            { id: 'SHAPE_10_100', label: '(10, 100)' },
+            { id: 'SHAPE_1000', label: '(1000,)' },
+          ],
+        },
+        {
+          id: 'COLUMN_SHAPE',
+          label: 'column_shape',
+          correctOptionId: 'SHAPE_1000_1',
+          options: [
+            { id: 'SHAPE_1000_1', label: '(1000, 1)' },
+            { id: 'SHAPE_1_1000', label: '(1, 1000)' },
+            { id: 'SHAPE_1000', label: '(1000,)' },
+          ],
+        },
+        {
+          id: 'SLICE_VALUE',
+          label: 'slice_value',
+          correctOptionId: 'VALUE_36',
+          options: [
+            { id: 'VALUE_36', label: '36' },
+            { id: 'VALUE_34', label: '34' },
+            { id: 'VALUE_46', label: '46' },
+          ],
+        },
+        {
+          id: 'FILTERED_VALUES',
+          label: 'filtered_values',
+          correctOptionId: 'MULTIPLES_21_TO_69',
+          options: [
+            {
+              id: 'MULTIPLES_21_TO_69',
+              label: '[21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69]',
+            },
+            {
+              id: 'MULTIPLES_24_TO_69',
+              label: '[24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69]',
+            },
+            {
+              id: 'MULTIPLES_21_TO_66',
+              label: '[21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66]',
+            },
+          ],
+        },
+        {
+          id: 'SUMMARY',
+          label: 'summary',
+          correctOptionId: 'SUMMARY_8_483_996_555',
+          options: [
+            { id: 'SUMMARY_8_483_996_555', label: '(8.483314773547882, 996, 555)' },
+            { id: 'SUMMARY_7_483_60_50100', label: '(7.483314773547883, 60, 50100)' },
+            { id: 'SUMMARY_8_416_995_545', label: '(8.416198487095663, 995, 545)' },
+          ],
+        },
+        {
+          id: 'MATRIX_SUMMARY',
+          label: 'matrix_summary',
+          correctOptionId: 'MATRIX_100_100_555',
+          options: [
+            { id: 'MATRIX_100_100_555', label: '((100, 100), 555.0)' },
+            { id: 'MATRIX_10_10_50100', label: '((10, 10), 50100.0)' },
+            { id: 'MATRIX_100_10_56', label: '((100, 10), 56.0)' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'MUTATION',
+      kind: 'diagnoseMutation',
+      title: '2. Read a changed matrix product',
+      prompt:
+        'Suppose S10 were changed to `P = np.matmul(X.T, Y)`, leaving every other statement unchanged. What would `matrix_summary` become?',
+      successCopy:
+        'Correct: the changed product has shape `(10, 100) @ (100, 10) = (10, 10)`. Its entry at `[5, 5]` is the sum of column 5 of Y, which is 50100.',
+      fields: [
+        {
+          id: 'CHANGED_MATRIX_SUMMARY',
+          label: 'matrix_summary after the change',
+          correctOptionId: 'CHANGED_10_10_50100',
+          options: [
+            { id: 'CHANGED_10_10_50100', label: '((10, 10), 50100.0)' },
+            { id: 'CHANGED_100_100_555', label: '((100, 100), 555.0)' },
+            { id: 'CHANGED_VALUE_ERROR', label: 'a matrix-dimension ValueError' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'TEST',
+      kind: 'distinguishingTest',
+      title: '3. Choose a comprehension check',
+      prompt:
+        'Which assertion passes for the notebook implementation but fails after S10 is changed to `np.matmul(X.T, Y)`?',
+      successCopy:
+        'Correct: the original product is 100 by 100, and its `[5, 5]` entry equals the sum of row 5 of Y. The changed product satisfies neither property.',
+      fields: [
+        {
+          id: 'TEST_ID',
+          label: 'Test',
+          correctOptionId: 'TEST_NOTEBOOK_PRODUCT',
+          options: [
+            {
+              id: 'TEST_NOTEBOOK_PRODUCT',
+              label: 'Check the product shape and a row-sum entry',
+              description: '`assert P.shape == (100, 100) and P[5, 5] == s[5]`',
+            },
+            {
+              id: 'TEST_TWO_DIMENSIONS',
+              label: 'Check only the number of dimensions',
+              description: '`assert P.ndim == 2`',
+            },
+            {
+              id: 'TEST_FLOAT_DTYPE',
+              label: 'Check only that the result is floating point',
+              description: '`assert np.issubdtype(P.dtype, np.floating)`',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  reveal: {
+    explanation:
+      'The notebook reshapes the integers 1 through 1000 into 100 rows, adds a column dimension with `np.newaxis`, slices by row and column positions, filters with a combined Boolean mask, and reduces different axes for column maxima and row sums. The original matrix product uses `Y.T`, so `(100, 10) @ (10, 100)` produces a 100 by 100 matrix; changing the transpose to `X.T` instead produces a different valid 10 by 10 product.',
+  },
+  successCopy:
+    'Notebook Lab complete: construction, slicing, filtering, reductions, and matrix multiplication are all correct.',
+})
 
 export const pcaCodeLab = defineCodeLabQuestion({
   id: 'pca-code-lab',
@@ -1162,6 +1348,7 @@ right_prediction = root.predict(np.array([2.5]))`,
 })
 
 export const codeLabQuestions = {
+  numpy: numpyNotebookLab,
   pca: pcaCodeLab,
   kmeans: kmeansCodeLab,
   knn: knnCodeLab,

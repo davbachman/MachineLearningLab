@@ -65,7 +65,7 @@ export function HomePage({ assignments }: HomePageProps) {
                   </span>
                 </div>
                 <h2>
-                  {index + 1}. {assignment.title}
+                  {index}. {assignment.title}
                 </h2>
                 <p className="assignment-subtitle">{assignment.description}</p>
               </div>

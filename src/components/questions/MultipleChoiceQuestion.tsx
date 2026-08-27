@@ -186,7 +186,7 @@ function DatasetPanel({
     const tableDataset = dataset as MultipleChoiceTableDataset
     return (
       <section className="data-table">
-        <h3 className="panel-title">Feature table</h3>
+        <h3 className="panel-title">{tableDataset.title ?? 'Feature table'}</h3>
         <p className="table-caption">{tableDataset.caption}</p>
         <table className="table-grid">
           <thead>
@@ -336,7 +336,13 @@ export function MultipleChoiceQuestion({
         <DatasetPanel dataset={dataset} resolved={resolved} />
 
         <section className="answer-panel">
-          <h3 className="panel-title">{question.parts.length > 1 ? 'Answer both parts' : 'Choose one answer'}</h3>
+          <h3 className="panel-title">
+            {question.parts.length === 1
+              ? 'Choose one answer'
+              : question.parts.length === 2
+                ? 'Answer both parts'
+                : 'Answer all parts'}
+          </h3>
           {question.parts.map((part) => (
             <div key={part.id} className="substep-shell">
               <div className="substep-header">

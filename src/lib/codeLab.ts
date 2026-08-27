@@ -35,8 +35,10 @@ export interface CodeLabQuestionSpec extends Omit<BaseQuestionSpec, 'kind' | 'va
   variantId: string
   code: string
   fixtureTitle: string
+  fixtureHeading?: string
   fixture: string
   invocationTitle: string
+  invocationLead?: string
   invocation: string
   stages: [CodeLabStageSpec, CodeLabStageSpec, CodeLabStageSpec]
   validator: (submission: unknown) => ValidationResult

@@ -5,6 +5,7 @@ import { getCorrectCodeLabSubmission } from '../lib/codeLab'
 describe('Code Lab question specifications', () => {
   it('provides the same three autogradable stages for every existing topic', () => {
     expect(Object.keys(codeLabQuestions)).toEqual([
+      'numpy',
       'pca',
       'kmeans',
       'knn',
@@ -20,6 +21,7 @@ describe('Code Lab question specifications', () => {
       ])
       expect(question.stages.map((stage) => stage.id)).toEqual(['TRACE', 'MUTATION', 'TEST'])
       const expectedVariants: Record<string, string> = {
+        'numpy-notebook-lab': 'numpy-notebook-v1',
         'pca-code-lab': 'pca-notebook-v1',
         'kmeans-code-lab': 'kmeans-code-v4',
         'knn-code-lab': 'knn-notebook-v1',
@@ -32,6 +34,7 @@ describe('Code Lab question specifications', () => {
 
   it('provides an explicit executable setup and invocation for every trace', () => {
     const expectedInvocations = {
+      numpy: 'array_shape = Y.shape',
       pca: 'projected = pca.fit_transform(X_trace)',
       kmeans: 'labels, updated_centroids = lloyd_step(X, centroids)',
       knn: 'prediction = knn.predict(3.0, 1.5)',
@@ -97,6 +100,14 @@ describe('Code Lab question specifications', () => {
   })
 
   it('uses concise expression-first labels for every trace field', () => {
+    expect(codeLabQuestions.numpy.stages[0].fields.map((field) => field.label)).toEqual([
+      'array_shape',
+      'column_shape',
+      'slice_value',
+      'filtered_values',
+      'summary',
+      'matrix_summary',
+    ])
     expect(codeLabQuestions.pca.stages[0].fields.map((field) => field.label)).toEqual([
       'pca.basis.shape',
       'projected.tolist()',
@@ -143,6 +154,11 @@ describe('Code Lab question specifications', () => {
       return field.options.find((option) => option.id === field.correctOptionId)!.label
     }
 
+    expect(correctLabel('numpy', 'ARRAY_SHAPE')).toBe('(100, 10)')
+    expect(correctLabel('numpy', 'COLUMN_SHAPE')).toBe('(1000, 1)')
+    expect(correctLabel('numpy', 'SLICE_VALUE')).toBe('36')
+    expect(correctLabel('numpy', 'SUMMARY')).toBe('(8.483314773547882, 996, 555)')
+    expect(correctLabel('numpy', 'MATRIX_SUMMARY')).toBe('((100, 100), 555.0)')
     expect(correctLabel('pca', 'BASIS_SHAPE')).toBe('(2, 1)')
     expect(correctLabel('pca', 'PROJECTED')).toBe('[[-2.0], [0.0], [2.0]]')
     expect(correctLabel('pca', 'NEW_PROJECTED')).toBe('[[-1.0], [1.0]]')
@@ -165,6 +181,15 @@ describe('Code Lab question specifications', () => {
   })
 
   it('uses uniquely diagnostic and executable mutation tests', () => {
+    expect(codeLabQuestions.numpy.code).toContain('P = np.matmul(X, Y.T)')
+    expect(codeLabQuestions.numpy.stages[1].prompt).toContain('P = np.matmul(X.T, Y)')
+    const numpyTest = codeLabQuestions.numpy.stages[2].fields[0]
+    const correctNumpyTest = numpyTest.options.find(
+      (option) => option.id === numpyTest.correctOptionId,
+    )!
+    expect(correctNumpyTest.description).toContain('P.shape == (100, 100)')
+    expect(correctNumpyTest.description).toContain('P[5, 5] == s[5]')
+
     expect(codeLabQuestions.knn.code).toContain(
       'indices = distances.argsort()[:self.n_neighbors]',
     )

@@ -249,7 +249,7 @@ export function CodeLabQuestion({
         <div className="code-lab-run-context">
           <section className="code-lab-fixture" aria-label={question.fixtureTitle}>
             <span className="code-lab-eyebrow">{question.fixtureTitle}</span>
-            <h3>Values defined before the run</h3>
+            <h3>{question.fixtureHeading ?? 'Values defined before the run'}</h3>
             <pre>
               <HighlightedPython source={question.fixture} />
             </pre>
@@ -258,7 +258,10 @@ export function CodeLabQuestion({
           <section className="code-lab-invocation" aria-label="Executed Python statements">
             <span className="code-lab-eyebrow">Executed Python</span>
             <h3>{question.invocationTitle}</h3>
-            <p>After defining the values at left, Python executes the following:</p>
+            <p>
+              {question.invocationLead ??
+                'After defining the values at left, Python executes the following:'}
+            </p>
             <pre>
               <HighlightedPython source={question.invocation} />
             </pre>

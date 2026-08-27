@@ -13,7 +13,12 @@ describe('decisionTreeAssignment', () => {
     expect(decisionTreeAssignment.questions.map((question) => question.id)).toEqual(
       expect.arrayContaining(['dt-visual-axis-split', 'dt-visual-depth-two']),
     )
-    expect(publishedAssignments.map((assignment) => assignment.id)).toEqual(['pca', 'kmeans', 'knn'])
+    expect(publishedAssignments.map((assignment) => assignment.id)).toEqual([
+      'numpy',
+      'pca',
+      'kmeans',
+      'knn',
+    ])
   })
 
   it('accepts the warm-up Gini values and rejects swapped impurity answers', () => {

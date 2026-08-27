@@ -6,7 +6,7 @@ Created by David Bachman with GPT 5.5. To learn more about David see https://pza
 
 ## Brief description
 
-Interactive machine-learning labs for PCA, k-means, and k-nearest neighbors, with mathematical, visual, and notebook-comprehension questions plus downloadable submission data.
+Interactive machine-learning labs for NumPy, PCA, k-means, and k-nearest neighbors, with mathematical, visual, and notebook-comprehension questions plus downloadable submission data.
 
 ## Instructions for use
 

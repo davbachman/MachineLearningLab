@@ -155,6 +155,7 @@ export type QuestionSpec =
 
 export interface AssignmentSpec {
   id: string
+  displayNumber?: number
   version: number
   title: string
   topic: string

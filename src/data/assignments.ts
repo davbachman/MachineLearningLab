@@ -5,6 +5,7 @@ import { knnAssignment } from './knnAssignment'
 import { numpyAssignment } from './numpyAssignment'
 import { pcaAssignment } from './pcaAssignment'
 import { randomForestAssignment } from './randomForestAssignment'
+import { notebookAssignments } from './notebookAssignments'
 
 export const assignmentRegistry: AssignmentSpec[] = [
   numpyAssignment,
@@ -13,6 +14,7 @@ export const assignmentRegistry: AssignmentSpec[] = [
   knnAssignment,
   decisionTreeAssignment,
   randomForestAssignment,
+  ...notebookAssignments,
 ]
 
 export const publishedAssignments = assignmentRegistry.filter((assignment) => assignment.published)

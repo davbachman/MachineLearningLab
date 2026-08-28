@@ -1,8 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import { kmeansAssignment } from '../data/kmeansAssignment'
 import { kmeansInteractiveDatasets } from '../data/kmeansDatasets'
+import { getCorrectCodeLabSubmission } from '../lib/codeLab'
 
 describe('kmeansAssignment validators', () => {
+  it('ends with a lab grounded in the renamed k-means notebook', () => {
+    expect(kmeansAssignment.version).toBe(6)
+    const lab = kmeansAssignment.questions.at(-1)
+    if (lab?.kind !== 'codeLab') {
+      throw new Error('Expected the final k-means question to be a Notebook Lab.')
+    }
+
+    expect(lab.title).toContain('Notebook Lab')
+    expect(lab.prompt).toContain('2Kmeans.ipynb')
+    expect(lab.code).toContain('def centers_from_labels(data,labels):')
+    expect(lab.code).toContain('def labels_from_centers(data,centers):')
+    expect(lab.code).not.toContain('def lloyd_step')
+    expect(lab.validator(getCorrectCodeLabSubmission(lab)).correct).toBe(true)
+  })
+
   it('checks both iterations of the multipart Lloyd question', () => {
     const question = kmeansAssignment.questions[0]
     const dataset = kmeansInteractiveDatasets.fullIteration

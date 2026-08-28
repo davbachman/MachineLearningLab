@@ -18,6 +18,14 @@ describe('decisionTreeAssignment', () => {
       'pca',
       'kmeans',
       'knn',
+      'linear-regression',
+      'polynomial-regression',
+      'overfitting',
+      'gradient-descent',
+      'batch-gradient-descent',
+      'regularization',
+      'logistic-regression',
+      'softmax',
     ])
   })
 

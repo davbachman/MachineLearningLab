@@ -23,7 +23,7 @@ describe('Code Lab question specifications', () => {
       const expectedVariants: Record<string, string> = {
         'numpy-notebook-lab': 'numpy-notebook-v1',
         'pca-code-lab': 'pca-notebook-v1',
-        'kmeans-code-lab': 'kmeans-code-v4',
+        'kmeans-code-lab': 'kmeans-notebook-v1',
         'knn-code-lab': 'knn-notebook-v1',
         'decision-tree-code-lab': 'decision-tree-notebook-v1',
         'rf-code-lab': 'rf-notebook-v1',
@@ -36,7 +36,7 @@ describe('Code Lab question specifications', () => {
     const expectedInvocations = {
       numpy: 'array_shape = Y.shape',
       pca: 'projected = pca.fit_transform(X_trace)',
-      kmeans: 'labels, updated_centroids = lloyd_step(X, centroids)',
+      kmeans: 'centers = centers_from_labels(data, labels)',
       knn: 'prediction = knn.predict(3.0, 1.5)',
       decisionTrees: 'best_split = BestSplit(X_trace, y_trace)',
       randomForests: 'forest.fit(X_trace, y_trace)',
@@ -114,9 +114,11 @@ describe('Code Lab question specifications', () => {
       'new_projected.tolist()',
     ])
     expect(codeLabQuestions.kmeans.stages[0].fields.map((field) => field.label)).toEqual([
-      'labels.tolist()',
-      'updated_centroids.tolist()',
-      'post_objective',
+      'centers.tolist()',
+      'distances.tolist()',
+      'assigned.tolist()',
+      'matrix.tolist()',
+      'prediction.tolist()',
     ])
     expect(codeLabQuestions.knn.stages[0].fields.map((field) => field.label)).toEqual([
       'X.shape after X = X[:, 2:] in the notebook',
@@ -162,8 +164,13 @@ describe('Code Lab question specifications', () => {
     expect(correctLabel('pca', 'BASIS_SHAPE')).toBe('(2, 1)')
     expect(correctLabel('pca', 'PROJECTED')).toBe('[[-2.0], [0.0], [2.0]]')
     expect(correctLabel('pca', 'NEW_PROJECTED')).toBe('[[-1.0], [1.0]]')
-    expect(correctLabel('kmeans', 'ASSIGNMENTS')).toBe('[0, 0, 1, 1]')
-    expect(correctLabel('kmeans', 'POST_OBJECTIVE')).toBe('4.0')
+    expect(correctLabel('kmeans', 'CENTERS')).toBe('[[1.0, 0.0], [9.0, 0.0]]')
+    expect(correctLabel('kmeans', 'DISTANCES')).toBe(
+      '[[1.0, 81.0], [16.0, 16.0], [81.0, 1.0]]',
+    )
+    expect(correctLabel('kmeans', 'ASSIGNED')).toBe('[0, 0, 1, 1]')
+    expect(correctLabel('kmeans', 'MATRIX')).toBe('[[1.0, 1.0], [0.0, 2.0]]')
+    expect(correctLabel('kmeans', 'PREDICTION')).toBe('[0, 1]')
     expect(correctLabel('knn', 'IRIS_X_SHAPE')).toBe('(150, 2)')
     expect(correctLabel('knn', 'DISTANCES')).toBe('[4.25, 1.25, 3.25, 10.25]')
     expect(correctLabel('knn', 'NEIGHBOR_SPECIES')).toBe('[0, 0]')
@@ -216,8 +223,8 @@ describe('Code Lab question specifications', () => {
     const correctKmeansTest = kmeansTest.options.find(
       (option) => option.id === kmeansTest.correctOptionId,
     )!
-    expect(correctKmeansTest.description).toContain('lloyd_step(X, centroids)')
-    expect(correctKmeansTest.description).toContain('assert np.allclose')
+    expect(correctKmeansTest.description).toContain('labels_from_centers(X, C)')
+    expect(correctKmeansTest.description).toContain('== [0, 0, 1, 1]')
 
     const treeTest = codeLabQuestions.decisionTrees.stages[2].fields[0]
     const correctTreeTest = treeTest.options.find(
@@ -264,5 +271,13 @@ describe('Code Lab question specifications', () => {
         (option) => option.id === modelSelection.correctOptionId,
       )!.description,
     ).toContain('k[accuracies.argmax()] == 5')
+  })
+
+  it('references the student-facing 2026 notebook filenames', () => {
+    expect(codeLabQuestions.numpy.prompt).toContain('0Numpy.ipynb')
+    expect(codeLabQuestions.pca.prompt).toContain('1PCA.ipynb')
+    expect(codeLabQuestions.kmeans.prompt).toContain('2Kmeans.ipynb')
+    expect(codeLabQuestions.knn.prompt).toContain('3KNN.ipynb')
+    expect(knnEvaluationNotebookLab.prompt).toContain('4KNN.ipynb')
   })
 })

@@ -4,6 +4,7 @@ import { numpyNotebookLab } from './codeLabQuestions'
 
 export const numpyAssignment: AssignmentSpec = {
   id: 'numpy',
+  displayNumber: 0,
   version: 1,
   title: 'Numpy',
   topic: 'Python Foundations',

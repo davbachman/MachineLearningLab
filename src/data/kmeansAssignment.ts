@@ -8,7 +8,7 @@ import {
   runLloydToConvergence,
 } from '../lib/kmeansMath'
 import { validateMultipleChoiceSelections } from '../lib/questionValidation'
-import { kmeansCodeLab } from './codeLabQuestions'
+import { kmeansNotebookLab } from './kmeansNotebookLab'
 
 function validateLloydIteration(
   datasetId: keyof typeof kmeansInteractiveDatasets,
@@ -124,7 +124,8 @@ function validateMetricComparison(datasetId: keyof typeof kmeansInteractiveDatas
 
 export const kmeansAssignment: AssignmentSpec = {
   id: 'kmeans',
-  version: 5,
+  displayNumber: 2,
+  version: 6,
   title: 'K-means Clustering',
   topic: 'Clustering',
   description:
@@ -252,6 +253,6 @@ export const kmeansAssignment: AssignmentSpec = {
       },
       successCopy: 'Correct! Good Job!',
     },
-    kmeansCodeLab,
+    kmeansNotebookLab,
   ],
 }

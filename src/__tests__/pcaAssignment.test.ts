@@ -3,6 +3,12 @@ import { pcaAssignment } from '../data/pcaAssignment'
 import { pca2dDatasets, pca3dDatasets } from '../data/pcaDatasets'
 
 describe('pcaAssignment validators', () => {
+  it('references the renamed PCA notebook', () => {
+    expect(pcaAssignment.version).toBe(7)
+    expect(pcaAssignment.questions.at(-1)?.kind).toBe('codeLab')
+    expect(pcaAssignment.questions.at(-1)?.prompt).toContain('1PCA.ipynb')
+  })
+
   it('accepts the optimal uncentered 2D direction and rejects an orthogonal guess', () => {
     const question = pcaAssignment.questions[0]
     const dataset = pca2dDatasets.uncentered

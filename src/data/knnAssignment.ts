@@ -211,7 +211,8 @@ function validateAdversarialPlacement(datasetId: KnnDatasetId) {
 
 export const knnAssignment: AssignmentSpec = {
   id: 'knn',
-  version: 7,
+  displayNumber: 3,
+  version: 8,
   title: 'k-Nearest Neighbors',
   topic: 'Classification',
   description:

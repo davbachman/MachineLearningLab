@@ -4,8 +4,8 @@ import { knnInteractiveDatasets } from '../data/knnDatasets'
 import { classifyGridCells } from '../lib/knnMath'
 
 describe('knnAssignment validators', () => {
-  it('publishes both notebook-based k-NN labs as assignment version 7', () => {
-    expect(knnAssignment.version).toBe(7)
+  it('publishes both renamed notebook-based k-NN labs as assignment version 8', () => {
+    expect(knnAssignment.version).toBe(8)
     expect(knnAssignment.questions.slice(-2).map((question) => question.id)).toEqual([
       'knn-code-lab',
       'knn-evaluation-notebook-lab',
@@ -14,6 +14,8 @@ describe('knnAssignment validators', () => {
       'Notebook Lab: Read the k-NN Implementation',
       'Notebook Lab: Evaluate and Select a k-NN Model',
     ])
+    expect(knnAssignment.questions.at(-2)?.prompt).toContain('3KNN.ipynb')
+    expect(knnAssignment.questions.at(-1)?.prompt).toContain('4KNN.ipynb')
   })
 
   it('checks all three k values in the classification-sequence question', () => {

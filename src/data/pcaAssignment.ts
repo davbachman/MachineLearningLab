@@ -132,7 +132,8 @@ function validateTableEntry(datasetId: keyof typeof handCalculationDatasets) {
 
 export const pcaAssignment: AssignmentSpec = {
   id: 'pca',
-  version: 6,
+  displayNumber: 1,
+  version: 7,
   title: 'Principal Component Analysis',
   topic: 'Dimensionality Reduction',
   description:

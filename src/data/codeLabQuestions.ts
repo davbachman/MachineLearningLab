@@ -1,4 +1,5 @@
 import { defineCodeLabQuestion, type CodeLabQuestionSpec } from '../lib/codeLab'
+import { kmeansNotebookLab } from './kmeansNotebookLab'
 
 const numpyNotebookCode = `import numpy as np
 
@@ -346,7 +347,7 @@ export const pcaCodeLab = defineCodeLabQuestion({
   kind: 'codeLab',
   title: 'Notebook Lab: Read the PCA Implementation',
   prompt:
-    'Use the completed `homework3solutions.ipynb` notebook to answer questions about its PCA implementation and the way `fit_transform` combines its methods.',
+    'Use the completed `1PCA.ipynb` notebook to answer questions about its PCA implementation and the way `fit_transform` combines its methods.',
   instructions:
     'The class below is the notebook implementation, reformatted only for readability. The trace matrix has a diagonal covariance matrix, so the displayed basis and projections are exact.',
   datasetId: 'pca-notebook-v1',
@@ -629,7 +630,7 @@ export const knnCodeLab = defineCodeLabQuestion({
   kind: 'codeLab',
   title: 'Notebook Lab: Read the k-NN Implementation',
   prompt:
-    'Use the completed `homework1solutions.ipynb` notebook to answer questions about its Iris data preparation and `KNeighborsClassifier` implementation.',
+    'Use the completed `3KNN.ipynb` notebook to answer questions about its Iris data preparation and `KNeighborsClassifier` implementation.',
   instructions:
     'The code below is the classifier from the notebook, reformatted only for readability. The small trace dataset uses the same column order as the notebook: petal length, then petal width.',
   datasetId: 'knn-notebook-v1',
@@ -817,7 +818,7 @@ export const knnEvaluationNotebookLab = defineCodeLabQuestion({
   kind: 'codeLab',
   title: 'Notebook Lab: Evaluate and Select a k-NN Model',
   prompt:
-    'Use the completed `homework2solutions.ipynb` notebook to answer questions about its train/test split, accuracy function, and selection of k.',
+    'Use the completed `4KNN.ipynb` notebook to answer questions about its train/test split, accuracy function, and selection of k.',
   instructions:
     'Read the NumPy operations exactly as written. In particular, `np.random.choice` samples with replacement unless `replace=False` is supplied.',
   datasetId: 'knn-evaluation-notebook-v1',
@@ -876,7 +877,7 @@ best_accuracy = float(accuracies[best_position])`,
       fields: [
         {
           id: 'ORIGINAL_X_SHAPE',
-          label: 'X.shape in homework2solutions.ipynb',
+          label: 'X.shape in 4KNN.ipynb',
           correctOptionId: 'SHAPE_150_4',
           options: [
             { id: 'SHAPE_150_4', label: '(150, 4)' },
@@ -1350,7 +1351,7 @@ right_prediction = root.predict(np.array([2.5]))`,
 export const codeLabQuestions = {
   numpy: numpyNotebookLab,
   pca: pcaCodeLab,
-  kmeans: kmeansCodeLab,
+  kmeans: kmeansNotebookLab,
   knn: knnCodeLab,
   decisionTrees: decisionTreeCodeLab,
   randomForests: randomForestCodeLab,

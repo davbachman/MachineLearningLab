@@ -19,7 +19,7 @@ describe('HomePage', () => {
     })
   })
 
-  it('numbers the published assignment cards from zero', () => {
+  it('uses notebook-aligned numbers for every published assignment card', () => {
     render(
       <MemoryRouter>
         <HomePage assignments={publishedAssignments} />
@@ -31,6 +31,14 @@ describe('HomePage', () => {
       '1. Principal Component Analysis',
       '2. K-means Clustering',
       '3. k-Nearest Neighbors',
+      '5. Linear Regression',
+      '6. Polynomial Regression',
+      '7. Overfitting',
+      '8. Gradient Descent',
+      '9. Batch Gradient Descent',
+      '10. Regularization',
+      '11. Logistic Regression',
+      '12. Softmax',
     ])
   })
 })

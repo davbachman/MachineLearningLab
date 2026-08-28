@@ -120,7 +120,7 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
               <span className="status-pill">
                 {resolvedCount} / {assignment.questions.length} resolved
               </span>
-              <button type="button" className="button-secondary" disabled={!complete} onClick={handleDownload}>
+              <button type="button" className="button-secondary" onClick={handleDownload}>
                 Download JSON
               </button>
               <button type="button" className="button-ghost" onClick={handleReset}>
@@ -289,11 +289,9 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
               >
                 Next question
               </button>
-              {complete ? (
-                <button type="button" className="button-secondary" onClick={handleDownload}>
-                  Download completed JSON
-                </button>
-              ) : null}
+              <button type="button" className="button-secondary" onClick={handleDownload}>
+                Download JSON
+              </button>
             </div>
           </section>
         </div>

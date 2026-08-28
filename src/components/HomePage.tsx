@@ -49,13 +49,13 @@ export function HomePage({ assignments }: HomePageProps) {
             <h1 className="hero-title">Machine learning</h1>
             <p className="hero-copy">
               Each assignment is a guided set of questions with unlimited retries, free navigation,
-              browser-local progress, and a JSON export for Gradescope upload at the end.
+              browser-local progress, and a JSON export for Gradescope upload at any time.
             </p>
           </div>
         </header>
 
         <section className="assignments-grid">
-          {states.map(({ assignment, state, resolved, complete }, index) => (
+          {states.map(({ assignment, state, resolved }, index) => (
             <article key={assignment.id} className="assignment-card">
               <div>
                 <div className="assignment-meta">
@@ -93,7 +93,6 @@ export function HomePage({ assignments }: HomePageProps) {
                 <button
                   type="button"
                   className="button-secondary"
-                  disabled={!complete}
                   onClick={() => downloadSubmissionExport(assignment, state)}
                 >
                   Download JSON

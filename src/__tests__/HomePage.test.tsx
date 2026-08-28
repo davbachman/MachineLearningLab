@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { HomePage } from '../components/HomePage'
 import { publishedAssignments } from '../data/assignments'
 
@@ -18,6 +18,8 @@ describe('HomePage', () => {
       },
     })
   })
+
+  afterEach(cleanup)
 
   it('uses notebook-aligned numbers for every published assignment card', () => {
     render(
@@ -40,5 +42,17 @@ describe('HomePage', () => {
       '11. Logistic Regression',
       '12. Softmax',
     ])
+  })
+
+  it('allows every untouched assignment to be downloaded', () => {
+    render(
+      <MemoryRouter>
+        <HomePage assignments={publishedAssignments} />
+      </MemoryRouter>,
+    )
+
+    const downloadButtons = screen.getAllByRole('button', { name: 'Download JSON' })
+    expect(downloadButtons).toHaveLength(publishedAssignments.length)
+    downloadButtons.forEach((button) => expect(button).toBeEnabled())
   })
 })

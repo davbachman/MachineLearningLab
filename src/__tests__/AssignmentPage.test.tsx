@@ -48,4 +48,16 @@ describe('AssignmentPage', () => {
     )
     expect(screen.queryByRole('button', { name: /give up/i })).not.toBeInTheDocument()
   })
+
+  it('allows an untouched assignment to be downloaded from either page control', () => {
+    render(
+      <MemoryRouter>
+        <AssignmentPage assignment={numpyAssignment} />
+      </MemoryRouter>,
+    )
+
+    const downloadButtons = screen.getAllByRole('button', { name: 'Download JSON' })
+    expect(downloadButtons).toHaveLength(2)
+    downloadButtons.forEach((button) => expect(button).toBeEnabled())
+  })
 })

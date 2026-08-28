@@ -45,7 +45,7 @@ The ZIP has the four files Gradescope needs at its root: executable `setup.sh` a
 
 ## Student submission instructions
 
-Students should complete the assignment in the web app, use its download/export control, and upload the resulting `<assignment-id>-submission.json` file to the matching Gradescope assignment. They should upload the JSON file itself, not a screenshot, notebook, ZIP, or renamed text file.
+Students can use the app's **Download JSON** control at any time and upload the resulting `<assignment-id>-submission.json` file to the matching Gradescope assignment. Incomplete exports are accepted and receive credit for the recorded answers that are correct. An answer currently edited in the interface is recorded only after the student checks or submits it. Students should upload the JSON file itself, not a screenshot, notebook, ZIP, or renamed text file.
 
 The runner first looks for that app-generated filename. It also accepts `submission.json`, or a single JSON file in the submission directory, which makes instructor testing easier.
 

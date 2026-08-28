@@ -10,6 +10,6 @@ Interactive machine-learning labs spanning NumPy through softmax classification,
 
 ## Instructions for use
 
-Choose a topic, work through its questions in order, and download the JSON submission after resolving every question. Progress is saved in the browser.
+Choose a topic, work through its questions, and download the JSON submission at any time. Progress is saved in the browser, and incomplete submissions receive credit for the recorded answers that are correct.
 
 Instructor setup for the upload-ready Gradescope autograders is documented in [gradescope/README.md](gradescope/README.md).

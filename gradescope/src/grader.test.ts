@@ -65,6 +65,24 @@ describe('Gradescope grader', () => {
     }
   })
 
+  it('accepts untouched app exports as incomplete submissions for every assignment', () => {
+    for (const assignment of publishedAssignments) {
+      const submission = cloneSubmission(createReferenceSubmission(assignment))
+      submission.questions.forEach((question) => {
+        question.status = 'gave_up'
+        question.attempts = 0
+        question.hintsShown = 0
+        question.latestAnswer = null
+        question.attemptHistory = []
+      })
+      const results = gradeSubmission(configFor(assignment), submission)
+
+      expect(results.score, assignment.id).toBe(0)
+      expect(results.output, assignment.id).toContain(`Graded ${assignment.questions.length} questions`)
+      expect(results.tests[0]?.name, assignment.id).not.toBe('Submission validation')
+    }
+  })
+
   it('denies a wrong raw answer even when its exported status says correct', () => {
     const assignment = publishedAssignments.find((candidate) =>
       candidate.questions.some((question) => question.kind === 'multipleChoice'),

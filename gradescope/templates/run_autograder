@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+autograder_root="${AUTOGRADER_ROOT:-/autograder}"
+source_dir="${AUTOGRADER_SOURCE_DIR:-${autograder_root}/source}"
+submission_dir="${AUTOGRADER_SUBMISSION_DIR:-${autograder_root}/submission}"
+results_dir="${AUTOGRADER_RESULTS_DIR:-${autograder_root}/results}"
+node_bin="${AUTOGRADER_NODE_BIN:-node}"
+
+grader_file="${AUTOGRADER_GRADER_FILE:-${source_dir}/grader.cjs}"
+assignment_file="${AUTOGRADER_ASSIGNMENT_FILE:-${source_dir}/assignment.json}"
+results_file="${AUTOGRADER_RESULTS_FILE:-${results_dir}/results.json}"
+
+if [[ -n "${AUTOGRADER_SUBMISSION_FILE:-}" ]]; then
+  submission_file="${AUTOGRADER_SUBMISSION_FILE}"
+else
+  assignment_id="$("${node_bin}" -e 'const fs = require("fs"); const config = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.stdout.write(config.assignmentId);' "${assignment_file}")"
+  submission_file="${submission_dir}/${assignment_id}-submission.json"
+
+  if [[ ! -f "${submission_file}" && -f "${submission_dir}/submission.json" ]]; then
+    submission_file="${submission_dir}/submission.json"
+  fi
+
+  if [[ ! -f "${submission_file}" ]]; then
+    submission_candidates=()
+    for candidate in "${submission_dir}"/*.json; do
+      if [[ -f "${candidate}" ]]; then
+        submission_candidates+=("${candidate}")
+      fi
+    done
+    if [[ ${#submission_candidates[@]} -eq 1 ]]; then
+      submission_file="${submission_candidates[0]}"
+    fi
+  fi
+fi
+
+mkdir -p "$(dirname "${results_file}")"
+exec "${node_bin}" "${grader_file}" "${assignment_file}" "${submission_file}" "${results_file}"

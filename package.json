@@ -9,6 +9,11 @@
     "test": "vitest",
     "test:run": "vitest run",
     "lint": "eslint .",
+    "gradescope:typecheck": "tsc -p gradescope/tsconfig.json",
+    "gradescope:bundle": "vite build --config gradescope/vite.config.ts",
+    "gradescope:packages": "python3 gradescope/scripts/build_packages.py",
+    "gradescope:build": "npm run gradescope:typecheck && npm run gradescope:bundle && npm run gradescope:packages",
+    "gradescope:test": "npm run gradescope:build && vitest run --config gradescope/vitest.config.ts && python3 gradescope/scripts/verify_packages.py",
     "preview": "vite preview"
   },
   "dependencies": {

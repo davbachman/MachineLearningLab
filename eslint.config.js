@@ -20,4 +20,10 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['gradescope/**/*.{ts,js}'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])

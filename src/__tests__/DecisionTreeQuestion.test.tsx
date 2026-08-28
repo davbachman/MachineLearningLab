@@ -27,7 +27,6 @@ describe('DecisionTreeQuestion', () => {
         totalQuestions={decisionTreeAssignment.questions.length}
         hints={[]}
         onAttempt={onAttempt}
-        onGiveUp={vi.fn()}
       />,
     )
 

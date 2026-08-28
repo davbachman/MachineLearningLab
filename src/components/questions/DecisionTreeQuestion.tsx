@@ -20,10 +20,8 @@ import {
 import { DEFAULT_HINT_SCHEDULE } from '../../lib/assignmentState'
 import {
   evaluateSplit,
-  findBestSplit,
   formatGini,
   formatThreshold,
-  giniFromCounts,
   splitLabel,
 } from '../../lib/decisionTreeMath'
 
@@ -34,7 +32,6 @@ interface DecisionTreeQuestionProps {
   totalQuestions: number
   hints: string[]
   onAttempt: (outcome: AttemptOutcome, answer: unknown) => void
-  onGiveUp: (answer: unknown) => void
 }
 
 const STAGE_SIZE = 420
@@ -749,7 +746,6 @@ export function DecisionTreeQuestion({
   totalQuestions,
   hints,
   onAttempt,
-  onGiveUp,
 }: DecisionTreeQuestionProps) {
   const dataset = decisionTreeDatasets[question.datasetId]
   const [feedback, setFeedback] = useState('')
@@ -770,7 +766,7 @@ export function DecisionTreeQuestion({
   const [selectedChildSplitId, setSelectedChildSplitId] = useState<string | undefined>()
   const [visualFeatureId, setVisualFeatureId] = useState('x')
   const [visualThreshold, setVisualThreshold] = useState(4.5)
-  const resolved = state.status === 'correct' || state.status === 'gave_up'
+  const showAnswer = state.status === 'correct' || state.status === 'gave_up'
   const schedule = question.hintSchedule ?? DEFAULT_HINT_SCHEDULE
 
   const splitScoreSubmission = (step: 'partition' | 'childStats' | 'weightedGini') => ({
@@ -792,34 +788,6 @@ export function DecisionTreeQuestion({
     },
     value: parseNumber(weightedGiniInput),
   })
-
-  const currentAnswer = () => {
-    if (dataset.kind === 'giniWarmup') {
-      return {
-        values: Object.fromEntries(
-          dataset.nodes.map((node) => [node.id, parseNumber(giniInputs[node.id] ?? '')]),
-        ),
-      }
-    }
-
-    if (dataset.kind === 'splitScore') {
-      const step = stepIndex === 0 ? 'partition' : stepIndex === 1 ? 'childStats' : 'weightedGini'
-      return splitScoreSubmission(step)
-    }
-
-    if (dataset.kind === 'visualSplit') {
-      return { featureId: visualFeatureId, threshold: visualThreshold }
-    }
-
-    if (dataset.kind === 'depthTwo' || dataset.kind === 'visualDepthTwo') {
-      return {
-        rootSplitId: selectedRootSplitId ?? null,
-        rightChildSplitId: selectedChildSplitId ?? null,
-      }
-    }
-
-    return { splitId: selectedSplitId ?? null }
-  }
 
   const invalidAttempt = (message: string, answer: unknown) => {
     const nextIncorrectAttempts = state.incorrectAttempts + 1
@@ -923,53 +891,6 @@ export function DecisionTreeQuestion({
     onAttempt('correct', submission)
   }
 
-  const revealAnswer = () => {
-    const draft = currentAnswer()
-
-    if (dataset.kind === 'giniWarmup') {
-      setGiniInputs(
-        Object.fromEntries(
-          dataset.nodes.map((node) => [node.id, formatGini(giniFromCounts(node.counts))]),
-        ),
-      )
-    }
-
-    if (dataset.kind === 'splitScore') {
-      const score = evaluateSplit(dataset.rows, dataset.split)
-      setSelectedLeftRowIds(score.left.rows.map((row) => row.id))
-      setChildCountInputs({
-        leftNegative: String(score.left.counts.negative),
-        leftPositive: String(score.left.counts.positive),
-        rightNegative: String(score.right.counts.negative),
-        rightPositive: String(score.right.counts.positive),
-      })
-      setLeftGiniInput(formatGini(score.left.gini))
-      setRightGiniInput(formatGini(score.right.gini))
-      setWeightedGiniInput(formatGini(score.weightedGini))
-      setStepIndex(2)
-    }
-
-    if (dataset.kind === 'bestThreshold' || dataset.kind === 'bestRootSplit') {
-      setSelectedSplitId(findBestSplit(dataset.rows, dataset.candidateSplits).split.id)
-    }
-
-    if (dataset.kind === 'visualSplit') {
-      const best = findBestSplit(dataset.rows, dataset.candidateSplits).split
-      setVisualFeatureId(best.featureId)
-      setVisualThreshold(best.threshold)
-    }
-
-    if (dataset.kind === 'depthTwo' || dataset.kind === 'visualDepthTwo') {
-      const root = findBestSplit(dataset.rows, dataset.rootCandidates)
-      const child = findBestSplit(root.right.rows, dataset.rightChildCandidates)
-      setSelectedRootSplitId(root.split.id)
-      setSelectedChildSplitId(child.split.id)
-    }
-
-    setFeedback('Answer revealed. Compare the resolved split scores with your work.')
-    onGiveUp(draft)
-  }
-
   let checkButtonLabel = 'Check answer'
   let body = null as ReactNode
   let statusPills: ReactNode[] = []
@@ -980,7 +901,7 @@ export function DecisionTreeQuestion({
       <NodeGiniWarmup
         dataset={dataset}
         inputs={giniInputs}
-        disabled={resolved}
+        disabled={false}
         onChange={(nodeId, value) =>
           setGiniInputs((current) => ({ ...current, [nodeId]: value }))
         }
@@ -1004,7 +925,7 @@ export function DecisionTreeQuestion({
         leftInput={leftGiniInput}
         rightInput={rightGiniInput}
         weightedInput={weightedGiniInput}
-        disabled={resolved}
+        disabled={false}
         onToggleLeftRow={(rowId) =>
           setSelectedLeftRowIds((current) =>
             current.includes(rowId)
@@ -1034,8 +955,8 @@ export function DecisionTreeQuestion({
           rows={bestDataset.rows}
           splits={bestDataset.candidateSplits}
           selectedId={selectedSplitId}
-          disabled={resolved}
-          showScores={resolved}
+          disabled={false}
+          showScores={showAnswer}
           onSelect={setSelectedSplitId}
         />
       </div>
@@ -1048,8 +969,8 @@ export function DecisionTreeQuestion({
         dataset={dataset}
         featureId={visualFeatureId}
         threshold={visualThreshold}
-        disabled={resolved}
-        showScore={resolved}
+        disabled={false}
+        showScore={showAnswer}
         onFeatureChange={(nextFeatureId) => {
           setVisualFeatureId(nextFeatureId)
           setVisualThreshold(nextFeatureId === 'x' ? 4.5 : 2.5)
@@ -1065,7 +986,7 @@ export function DecisionTreeQuestion({
         dataset={dataset}
         selectedRootSplitId={selectedRootSplitId}
         selectedChildSplitId={selectedChildSplitId}
-        disabled={resolved}
+        disabled={false}
         onRootSelect={(splitId) => {
           setSelectedRootSplitId(splitId)
           setSelectedChildSplitId(undefined)
@@ -1090,8 +1011,8 @@ export function DecisionTreeQuestion({
             rows={dataset.rows}
             splits={dataset.rootCandidates}
             selectedId={selectedRootSplitId}
-            disabled={resolved}
-            showScores={resolved}
+            disabled={false}
+            showScores={showAnswer}
             onSelect={(splitId) => {
               setSelectedRootSplitId(splitId)
               setSelectedChildSplitId(undefined)
@@ -1103,8 +1024,8 @@ export function DecisionTreeQuestion({
             rows={rightChildRows}
             splits={dataset.rightChildCandidates}
             selectedId={selectedChildSplitId}
-            disabled={resolved || !selectedRoot}
-            showScores={resolved}
+            disabled={!selectedRoot}
+            showScores={showAnswer}
             onSelect={setSelectedChildSplitId}
           />
         </div>
@@ -1122,11 +1043,8 @@ export function DecisionTreeQuestion({
       hints={hints}
       controls={
         <>
-          <button type="button" className="button" onClick={checkWork} disabled={resolved}>
+          <button type="button" className="button" onClick={checkWork}>
             {checkButtonLabel}
-          </button>
-          <button type="button" className="button-secondary" onClick={revealAnswer} disabled={resolved}>
-            Give up
           </button>
           {statusPills}
         </>

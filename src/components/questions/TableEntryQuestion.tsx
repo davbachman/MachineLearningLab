@@ -3,7 +3,6 @@ import { QuestionFrame } from '../QuestionFrame'
 import type { AttemptOutcome, QuestionState, TableEntryQuestionSpec } from '../../types'
 import { handCalculationDatasets } from '../../data/pcaDatasets'
 import { DEFAULT_HINT_SCHEDULE } from '../../lib/assignmentState'
-import { formatNumber } from '../../lib/pcaMath'
 
 interface TableEntryQuestionProps {
   question: TableEntryQuestionSpec
@@ -12,7 +11,6 @@ interface TableEntryQuestionProps {
   totalQuestions: number
   hints: string[]
   onAttempt: (outcome: AttemptOutcome, answer: unknown) => void
-  onGiveUp: (answer: unknown) => void
 }
 
 function blankMatrix(rows: number, columns: number) {
@@ -44,7 +42,6 @@ export function TableEntryQuestion({
   totalQuestions,
   hints,
   onAttempt,
-  onGiveUp,
 }: TableEntryQuestionProps) {
   const dataset = handCalculationDatasets[question.datasetId]
   const [centeredInputs, setCenteredInputs] = useState(() => blankMatrix(dataset.rows.length, 2))
@@ -52,19 +49,7 @@ export function TableEntryQuestion({
   const [directionInputs, setDirectionInputs] = useState(['', ''])
   const [feedback, setFeedback] = useState('')
   const [stepIndex, setStepIndex] = useState(0)
-  const resolved = state.status === 'correct' || state.status === 'gave_up'
   const schedule = question.hintSchedule ?? DEFAULT_HINT_SCHEDULE
-  const shownCenteredInputs =
-    state.status === 'gave_up'
-      ? dataset.centeredRows.map((row) => row.map(formatNumber))
-      : centeredInputs
-  const shownCovarianceInputs =
-    state.status === 'gave_up'
-      ? dataset.covariance.map((row) => row.map(formatNumber))
-      : covarianceInputs
-  const shownDirectionInputs =
-    state.status === 'gave_up' ? dataset.firstDirection.map(formatNumber) : directionInputs
-  const shownStepIndex = state.status === 'gave_up' ? 2 : stepIndex
 
   const handleCenteredChange = (rowIndex: number, columnIndex: number, value: string) => {
     setCenteredInputs((current) =>
@@ -100,11 +85,11 @@ export function TableEntryQuestion({
 
   const checkCurrentStep = () => {
     if (stepIndex === 0) {
-      const parsed = parseMatrix(shownCenteredInputs)
+      const parsed = parseMatrix(centeredInputs)
       if (!parsed) {
         invalidAttempt('Enter a number in every centered-data box before checking.', {
           step: 'centeredData',
-          values: shownCenteredInputs,
+          values: centeredInputs,
         })
         return
       }
@@ -125,11 +110,11 @@ export function TableEntryQuestion({
     }
 
     if (stepIndex === 1) {
-      const parsed = parseMatrix(shownCovarianceInputs)
+      const parsed = parseMatrix(covarianceInputs)
       if (!parsed) {
         invalidAttempt('Enter a number in every covariance box before checking.', {
           step: 'covariance',
-          values: shownCovarianceInputs,
+          values: covarianceInputs,
         })
         return
       }
@@ -149,11 +134,11 @@ export function TableEntryQuestion({
       return
     }
 
-    const parsed = parseVector(shownDirectionInputs)
+    const parsed = parseVector(directionInputs)
     if (!parsed) {
       invalidAttempt('Enter both coordinates for the principal direction before checking.', {
         step: 'direction',
-        values: shownDirectionInputs,
+        values: directionInputs,
       })
       return
     }
@@ -171,17 +156,6 @@ export function TableEntryQuestion({
     onAttempt('correct', { step: 'direction', values: parsed })
   }
 
-  const revealAnswer = () => {
-    setFeedback('Answer revealed. The diagonal line direction is the only direction with large variance.')
-    onGiveUp(
-      stepIndex === 0
-        ? { step: 'centeredData', values: centeredInputs }
-        : stepIndex === 1
-          ? { step: 'covariance', values: covarianceInputs }
-          : { step: 'direction', values: directionInputs },
-    )
-  }
-
   return (
     <QuestionFrame
       question={question}
@@ -192,11 +166,8 @@ export function TableEntryQuestion({
       hints={hints}
       controls={
         <>
-          <button type="button" className="button" onClick={checkCurrentStep} disabled={resolved}>
+          <button type="button" className="button" onClick={checkCurrentStep}>
             {stepIndex < 2 ? 'Check this step' : 'Check direction'}
-          </button>
-          <button type="button" className="button-secondary" onClick={revealAnswer} disabled={resolved}>
-            Give up
           </button>
         </>
       }
@@ -228,11 +199,11 @@ export function TableEntryQuestion({
           <div className="substep-shell">
             <div className="substep-header">
               <h3 className="substep-title">1. Center the data</h3>
-              <span className="substep-status">{shownStepIndex > 0 || resolved ? 'Locked in' : 'Current step'}</span>
+              <span className="substep-status">{stepIndex > 0 ? 'Locked in' : 'Current step'}</span>
             </div>
             <table className="input-grid">
               <tbody>
-                {shownCenteredInputs.map((row, rowIndex) => (
+                {centeredInputs.map((row, rowIndex) => (
                   <tr key={`${question.id}-center-row-${rowIndex}`}>
                     {row.map((value, columnIndex) => (
                       <td key={`${question.id}-center-cell-${rowIndex}-${columnIndex}`}>
@@ -246,7 +217,7 @@ export function TableEntryQuestion({
                           onChange={(event) =>
                             handleCenteredChange(rowIndex, columnIndex, event.target.value)
                           }
-                          disabled={shownStepIndex > 0 || resolved}
+                          disabled={stepIndex > 0}
                         />
                       </td>
                     ))}
@@ -260,16 +231,16 @@ export function TableEntryQuestion({
             <div className="substep-header">
               <h3 className="substep-title">2. Enter the covariance matrix</h3>
               <span className="substep-status">
-                {shownStepIndex === 1 && !resolved
+                {stepIndex === 1
                   ? 'Current step'
-                  : shownStepIndex > 1 || resolved
+                  : stepIndex > 1
                     ? 'Locked in'
                     : 'Locked'}
               </span>
             </div>
             <table className="matrix-grid">
               <tbody>
-                {shownCovarianceInputs.map((row, rowIndex) => (
+                {covarianceInputs.map((row, rowIndex) => (
                   <tr key={`${question.id}-cov-row-${rowIndex}`}>
                     {row.map((value, columnIndex) => (
                       <td key={`${question.id}-cov-cell-${rowIndex}-${columnIndex}`}>
@@ -283,7 +254,7 @@ export function TableEntryQuestion({
                           onChange={(event) =>
                             handleCovarianceChange(rowIndex, columnIndex, event.target.value)
                           }
-                          disabled={shownStepIndex < 1 || shownStepIndex > 1 || resolved}
+                          disabled={stepIndex !== 1}
                         />
                       </td>
                     ))}
@@ -297,11 +268,11 @@ export function TableEntryQuestion({
             <div className="substep-header">
               <h3 className="substep-title">3. Enter the first principal direction</h3>
               <span className="substep-status">
-                {shownStepIndex === 2 && !resolved ? 'Current step' : resolved ? 'Revealed or correct' : 'Locked'}
+                {stepIndex === 2 ? 'Current step' : 'Locked'}
               </span>
             </div>
             <div className="vector-input-row">
-              {shownDirectionInputs.map((value, index) => (
+              {directionInputs.map((value, index) => (
                 <div key={`${question.id}-dir-${index}`} style={{ flex: '1 1 120px' }}>
                   <label className="sr-only" htmlFor={`${question.id}-dir-input-${index}`}>
                     Principal direction coordinate {index + 1}
@@ -311,7 +282,7 @@ export function TableEntryQuestion({
                     className="numeric-input"
                     value={value}
                     onChange={(event) => handleDirectionChange(index, event.target.value)}
-                    disabled={shownStepIndex < 2 || resolved}
+                    disabled={stepIndex < 2}
                   />
                 </div>
               ))}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { DEFAULT_HINT_SCHEDULE } from '../../lib/assignmentState'
 import { tokenizePythonLine } from '../../lib/pythonSyntax'
 import {
@@ -21,7 +21,6 @@ interface CodeLabQuestionProps {
   hints: string[]
   initialSubmission?: CodeLabSubmission
   onAttempt: (outcome: AttemptOutcome, answer: unknown) => void
-  onGiveUp: (answer: unknown) => void
 }
 
 const stageKickers: Record<CodeLabStageKind, string> = {
@@ -146,31 +145,21 @@ export function CodeLabQuestion({
   hints,
   initialSubmission,
   onAttempt,
-  onGiveUp,
 }: CodeLabQuestionProps) {
   const [answers, setAnswers] = useState<CodeLabAnswers>(() =>
     copyInitialAnswers(question, initialSubmission),
   )
   const [stageIndex, setStageIndex] = useState(() =>
-    firstUnfinishedStage(question, copyInitialAnswers(question, initialSubmission)),
+    state.status === 'correct' || state.status === 'gave_up'
+      ? 0
+      : firstUnfinishedStage(question, copyInitialAnswers(question, initialSubmission)),
   )
   const [feedback, setFeedback] = useState('')
-  const resolved = state.status === 'correct' || state.status === 'gave_up'
   const currentStage = question.stages[stageIndex]
   const schedule = question.hintSchedule ?? DEFAULT_HINT_SCHEDULE
-  const correctAnswerLookup = useMemo(
-    () =>
-      Object.fromEntries(
-        question.stages.map((stage) => [
-          stage.id,
-          Object.fromEntries(stage.fields.map((field) => [field.id, field.correctOptionId])),
-        ]),
-      ),
-    [question],
-  )
 
   const displayedAnswer = (stageId: string, fieldId: string) =>
-    answers[stageId]?.[fieldId] ?? (resolved ? correctAnswerLookup[stageId]?.[fieldId] : undefined)
+    answers[stageId]?.[fieldId]
 
   const selectAnswer = (stageId: string, fieldId: string, optionId: string) => {
     setAnswers((current) => ({
@@ -218,12 +207,6 @@ export function CodeLabQuestion({
     onAttempt('correct', submission)
   }
 
-  const revealAnswer = () => {
-    const submission = makeCodeLabSubmission(question, answers)
-    setFeedback('Answer revealed. Compare your selections with the reference answers shown below.')
-    onGiveUp(submission)
-  }
-
   return (
     <QuestionFrame
       question={question as unknown as QuestionSpec}
@@ -234,11 +217,8 @@ export function CodeLabQuestion({
       hints={hints}
       controls={
         <>
-          <button type="button" className="button" onClick={submitCurrentStage} disabled={resolved}>
+          <button type="button" className="button" onClick={submitCurrentStage}>
             {actionLabel(currentStage.kind)}
-          </button>
-          <button type="button" className="button-secondary" onClick={revealAnswer} disabled={resolved}>
-            Give up
           </button>
         </>
       }
@@ -276,17 +256,9 @@ export function CodeLabQuestion({
       <ol className="code-lab-stage-list">
         {question.stages.map((stage, index) => {
           const isPast = index < stageIndex
-          const isCurrent = index === stageIndex && !resolved
-          const isLocked = index > stageIndex && !resolved
-          const stageStatus = resolved
-            ? state.status === 'gave_up'
-              ? 'Revealed'
-              : 'Complete'
-            : isPast
-              ? 'Locked in'
-              : isCurrent
-                ? 'Current stage'
-                : 'Locked'
+          const isCurrent = index === stageIndex
+          const isLocked = index > stageIndex
+          const stageStatus = isPast ? 'Locked in' : isCurrent ? 'Current stage' : 'Locked'
 
           return (
             <li
@@ -305,14 +277,10 @@ export function CodeLabQuestion({
 
               <div className="code-lab-fields">
                 {stage.fields.map((field) => {
-                  const correctOption = field.options.find(
-                    (option) => option.id === field.correctOptionId,
-                  )
-
                   return (
                     <fieldset
                       className="code-lab-field"
-                      disabled={!isCurrent || resolved}
+                      disabled={!isCurrent}
                       key={field.id}
                     >
                       <legend>{field.label}</legend>
@@ -345,17 +313,6 @@ export function CodeLabQuestion({
                           )
                         })}
                       </div>
-                      {resolved && correctOption ? (
-                        <div className="code-lab-reference-answer">
-                          <span>Reference answer:</span>
-                          {stage.kind === 'executionTrace' ? (
-                            <code className="code-lab-choice-answer">{correctOption.label}</code>
-                          ) : (
-                            <strong>{correctOption.label}</strong>
-                          )}
-                          {correctOption.description ? <span>{correctOption.description}</span> : null}
-                        </div>
-                      ) : null}
                     </fieldset>
                   )
                 })}

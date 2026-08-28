@@ -31,7 +31,6 @@ describe('RandomForestQuestion', () => {
         totalQuestions={randomForestAssignment.questions.length}
         hints={[]}
         onAttempt={onAttempt}
-        onGiveUp={vi.fn()}
       />,
     )
 
@@ -52,40 +51,22 @@ describe('RandomForestQuestion', () => {
     })
   })
 
-  it('passes the current draft to give-up before filling the revealed answer', async () => {
-    const user = userEvent.setup()
-    const onGiveUp = vi.fn()
+  it('has no give-up action and keeps a completed question editable', () => {
     const question = randomForestAssignment.questions[0] as RandomForestQuestionSpec
 
     render(
       <RandomForestQuestion
         question={question}
-        state={activeState}
+        state={{ ...activeState, status: 'correct', resolvedAt: '2026-08-27T12:00:00.000Z' }}
         questionNumber={1}
         totalQuestions={randomForestAssignment.questions.length}
         hints={[]}
         onAttempt={vi.fn()}
-        onGiveUp={onGiveUp}
       />,
     )
 
-    await user.type(screen.getByLabelText('Multiplicity for row A'), '9')
-    await user.click(screen.getByLabelText('Row B is out of bag'))
-    await user.click(screen.getByRole('button', { name: 'Give up' }))
-
-    expect(onGiveUp).toHaveBeenCalledWith({
-      multiplicities: {
-        A: 9,
-        B: undefined,
-        C: undefined,
-        D: undefined,
-        E: undefined,
-        F: undefined,
-        G: undefined,
-        H: undefined,
-      },
-      oobIds: ['B'],
-    })
-    expect(screen.getByLabelText('Multiplicity for row C')).toHaveValue(3)
+    expect(screen.queryByRole('button', { name: /give up/i })).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Multiplicity for row A')).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Check answer' })).toBeEnabled()
   })
 })

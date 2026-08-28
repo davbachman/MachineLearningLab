@@ -48,8 +48,8 @@ export function HomePage({ assignments }: HomePageProps) {
             <div className="hero-kicker">CS158 interactive check-ins</div>
             <h1 className="hero-title">Machine learning</h1>
             <p className="hero-copy">
-              Each assignment is a guided sequence of questions with unlimited retries, optional give-up
-              reveals, browser-local progress, and a JSON export for Gradescope upload at the end.
+              Each assignment is a guided set of questions with unlimited retries, free navigation,
+              browser-local progress, and a JSON export for Gradescope upload at the end.
             </p>
           </div>
         </header>

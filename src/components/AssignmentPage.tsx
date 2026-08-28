@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   applyAttemptOutcome,
-  applyGiveUp,
   clearAssignmentProgress,
   getCurrentOrFirstActiveIndex,
   getResolvedCount,
@@ -43,7 +42,7 @@ function questionStatusLabel(questionState: QuestionState) {
   }
 
   if (questionState.status === 'active') {
-    return 'Current'
+    return questionState.attempts > 0 ? 'Try again' : 'Not started'
   }
 
   return 'Locked'
@@ -57,10 +56,7 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
     saveAssignmentState(assignment, state)
   }, [assignment, state])
 
-  const activeViewIndex =
-    state.questionStates[viewIndex]?.status === 'locked'
-      ? getCurrentOrFirstActiveIndex(state)
-      : viewIndex
+  const activeViewIndex = Math.min(Math.max(viewIndex, 0), assignment.questions.length - 1)
   const currentQuestion = assignment.questions[activeViewIndex]
   const currentQuestionState = state.questionStates[activeViewIndex]
   const resolvedCount = getResolvedCount(state)
@@ -87,10 +83,6 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
     persistNextState(applyAttemptOutcome(state, assignment, activeViewIndex, outcome, answer))
   }
 
-  const handleGiveUp = (answer: unknown) => {
-    persistNextState(applyGiveUp(state, assignment, activeViewIndex, answer))
-  }
-
   const handleReset = () => {
     clearAssignmentState(assignment.id)
     const initial = clearAssignmentProgress(assignment)
@@ -105,7 +97,7 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
     downloadSubmissionExport(assignment, nextState)
   }
 
-  const nextUnlocked = state.questionStates[activeViewIndex + 1]?.status === 'active'
+  const hasNextQuestion = activeViewIndex < assignment.questions.length - 1
   const hints = getVisibleHints(currentQuestion, currentQuestionState)
 
   return (
@@ -140,14 +132,17 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
 
         <div className="assignment-layout">
           <aside className="progress-panel">
-            <h3>Question flow</h3>
+            <h3>Questions</h3>
             <div className="progress-list">
               {assignment.questions.map((question, index) => {
                 const questionState = state.questionStates[index]
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={question.id}
-                    className={`progress-item ${index === activeViewIndex ? 'active' : ''} ${questionState.status === 'locked' ? 'locked' : ''}`}
+                    className={`progress-item ${index === activeViewIndex ? 'active' : ''}`}
+                    aria-current={index === activeViewIndex ? 'step' : undefined}
+                    onClick={() => setViewIndex(index)}
                   >
                     <div className="progress-label">
                       <span>
@@ -158,7 +153,7 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
                     <div className="progress-description">
                       Attempts: {questionState.attempts} | Hints shown: {questionState.hintsShown}
                     </div>
-                  </div>
+                  </button>
                 )
               })}
             </div>
@@ -174,7 +169,6 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
                 totalQuestions={assignment.questions.length}
                 hints={hints}
                 onAttempt={handleAttempt}
-                onGiveUp={handleGiveUp}
               />
             ) : null}
 
@@ -187,7 +181,6 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
                 totalQuestions={assignment.questions.length}
                 hints={hints}
                 onAttempt={handleAttempt}
-                onGiveUp={handleGiveUp}
               />
             ) : null}
 
@@ -200,7 +193,6 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
                 totalQuestions={assignment.questions.length}
                 hints={hints}
                 onAttempt={handleAttempt}
-                onGiveUp={handleGiveUp}
               />
             ) : null}
 
@@ -213,7 +205,6 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
                 totalQuestions={assignment.questions.length}
                 hints={hints}
                 onAttempt={handleAttempt}
-                onGiveUp={handleGiveUp}
               />
             ) : null}
 
@@ -226,7 +217,6 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
                 totalQuestions={assignment.questions.length}
                 hints={hints}
                 onAttempt={handleAttempt}
-                onGiveUp={handleGiveUp}
               />
             ) : null}
 
@@ -239,7 +229,6 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
                 totalQuestions={assignment.questions.length}
                 hints={hints}
                 onAttempt={handleAttempt}
-                onGiveUp={handleGiveUp}
               />
             ) : null}
 
@@ -253,7 +242,6 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
                   totalQuestions={assignment.questions.length}
                   hints={hints}
                   onAttempt={handleAttempt}
-                  onGiveUp={handleGiveUp}
                 />
               </Suspense>
             ) : null}
@@ -267,7 +255,6 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
                 totalQuestions={assignment.questions.length}
                 hints={hints}
                 onAttempt={handleAttempt}
-                onGiveUp={handleGiveUp}
               />
             ) : null}
 
@@ -287,7 +274,6 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
                     : undefined
                 }
                 onAttempt={handleAttempt}
-                onGiveUp={handleGiveUp}
               />
             ) : null}
 
@@ -299,7 +285,7 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
                 type="button"
                 className="button"
                 onClick={() => setViewIndex((current) => current + 1)}
-                disabled={!nextUnlocked}
+                disabled={!hasNextQuestion}
               >
                 Next question
               </button>

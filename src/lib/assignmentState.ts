@@ -49,9 +49,7 @@ export function createInitialAssignmentState(assignment: AssignmentSpec): Assign
     assignmentId: assignment.id,
     assignmentVersion: assignment.version,
     version: ASSIGNMENT_STATE_VERSION,
-    questionStates: assignment.questions.map((_, index) =>
-      createQuestionState(index === 0 ? 'active' : 'locked'),
-    ),
+    questionStates: assignment.questions.map(() => createQuestionState('active')),
     exportedAt: null,
   }
 }
@@ -78,18 +76,14 @@ export function hydrateAssignmentState(
     return createInitialAssignmentState(assignment)
   }
 
-  return candidate
-}
-
-function unlockNextQuestion(questionStates: QuestionState[], currentIndex: number) {
-  const nextState = questionStates[currentIndex + 1]
-  if (!nextState || nextState.status !== 'locked') {
-    return questionStates
+  return {
+    ...candidate,
+    questionStates: candidate.questionStates.map((questionState) =>
+      questionState.status === 'locked'
+        ? { ...questionState, status: 'active' }
+        : questionState,
+    ),
   }
-
-  return questionStates.map<QuestionState>((state, index) =>
-    index === currentIndex + 1 ? { ...state, status: 'active' } : state,
-  )
 }
 
 export function applyAttemptOutcome(
@@ -102,7 +96,7 @@ export function applyAttemptOutcome(
   const question = assignment.questions[questionIndex]
   const current = state.questionStates[questionIndex]
 
-  if (!question || current.status !== 'active') {
+  if (!question || !current) {
     return state
   }
 
@@ -113,8 +107,8 @@ export function applyAttemptOutcome(
     attempts: current.attempts + 1,
     incorrectAttempts,
     hintsShown: deriveHintsShown(question, incorrectAttempts),
-    status: outcome === 'correct' ? 'correct' : current.status,
-    resolvedAt: outcome === 'correct' ? new Date().toISOString() : current.resolvedAt,
+    status: outcome === 'correct' ? 'correct' : 'active',
+    resolvedAt: outcome === 'correct' ? new Date().toISOString() : null,
     latestAnswer: normalizedAnswer,
     attemptHistory: [
       ...current.attemptHistory,
@@ -127,13 +121,9 @@ export function applyAttemptOutcome(
     ],
   }
 
-  let questionStates = state.questionStates.map<QuestionState>((questionState, index) =>
+  const questionStates = state.questionStates.map<QuestionState>((questionState, index) =>
     index === questionIndex ? nextCurrentState : questionState,
   )
-
-  if (outcome === 'correct') {
-    questionStates = unlockNextQuestion(questionStates, questionIndex)
-  }
 
   return {
     ...state,
@@ -148,11 +138,11 @@ export function applyGiveUp(
   answer: unknown = null,
 ): AssignmentState {
   const current = state.questionStates[questionIndex]
-  if (!assignment.questions[questionIndex] || current.status !== 'active') {
+  if (!assignment.questions[questionIndex] || !current) {
     return state
   }
 
-  let questionStates = state.questionStates.map<QuestionState>((questionState, index) =>
+  const questionStates = state.questionStates.map<QuestionState>((questionState, index) =>
     index === questionIndex
       ? {
           ...questionState,
@@ -162,8 +152,6 @@ export function applyGiveUp(
         }
       : questionState,
   )
-
-  questionStates = unlockNextQuestion(questionStates, questionIndex)
 
   return {
     ...state,

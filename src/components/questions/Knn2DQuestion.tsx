@@ -19,7 +19,6 @@ import {
 } from '../../data/knnDatasets'
 import { DEFAULT_HINT_SCHEDULE } from '../../lib/assignmentState'
 import {
-  classifyGridCells,
   classifyKnnPoint,
   computeAccuracy,
   findBestK,
@@ -33,7 +32,6 @@ interface Knn2DQuestionProps {
   totalQuestions: number
   hints: string[]
   onAttempt: (outcome: AttemptOutcome, answer: unknown) => void
-  onGiveUp: (answer: unknown) => void
 }
 
 interface StageCell {
@@ -138,7 +136,6 @@ export function Knn2DQuestion({
   totalQuestions,
   hints,
   onAttempt,
-  onGiveUp,
 }: Knn2DQuestionProps) {
   const dataset = knnInteractiveDatasets[question.datasetId]
   const svgRef = useRef<SVGSVGElement | null>(null)
@@ -153,7 +150,7 @@ export function Knn2DQuestion({
   )
   const [selectedK, setSelectedK] = useState(() => (dataset.kind === 'bestK' ? dataset.initialK : 1))
   const [candidatePoint, setCandidatePoint] = useState<Vec2 | null>(null)
-  const resolved = state.status === 'correct' || state.status === 'gave_up'
+  const showAnswer = state.status === 'correct' || state.status === 'gave_up'
   const boundariesUnlocked = state.status === 'correct'
   const currentSchedule = question.hintSchedule ?? DEFAULT_HINT_SCHEDULE
 
@@ -260,7 +257,7 @@ export function Knn2DQuestion({
           ),
         },
       ]
-      if (resolved) {
+      if (showAnswer) {
         infoPanels.push({
           title: 'Correct answers',
           body: (
@@ -283,14 +280,6 @@ export function Knn2DQuestion({
     case 'decisionBoundary': {
       const currentDataset = dataset as KnnDecisionBoundaryDataset
       const currentStep = Math.min(stepIndex, currentDataset.kSequence.length - 1)
-      const currentTruth = classifyGridCells(
-        currentDataset.trainingPoints,
-        currentDataset.bounds,
-        currentDataset.gridColumns,
-        currentDataset.gridRows,
-        currentDataset.kSequence[currentStep],
-        currentDataset.metric,
-      )
 
       currentMetric = currentDataset.metric
       currentK = currentDataset.kSequence[currentStep]
@@ -298,7 +287,7 @@ export function Knn2DQuestion({
       stageSummary = `Step ${currentStep + 1} of ${currentDataset.kSequence.length}: paint the ${currentDataset.gridColumns} by ${currentDataset.gridRows} grid for k = ${currentK}.`
       checkButtonLabel = `Check k = ${currentK} boundary`
       showDecisionGrid = true
-      decisionGridCells = resolved ? currentTruth : paintedCells
+      decisionGridCells = paintedCells
       gridTemplate = buildStageCells(
         currentDataset.bounds,
         currentDataset.gridColumns,
@@ -320,7 +309,7 @@ export function Knn2DQuestion({
           body: <p className="reveal-copy">{currentDataset.classes[brushLabel].label}</p>,
         },
       ]
-      if (resolved) {
+      if (showAnswer) {
         infoPanels.push({
           title: 'Why the boundary changed',
           body: (
@@ -386,7 +375,7 @@ export function Knn2DQuestion({
           ),
         },
       ]
-      if (resolved && bestChoice) {
+      if (showAnswer && bestChoice) {
         infoPanels.push({
           title: 'Best held-out choice',
           body: (
@@ -490,7 +479,7 @@ export function Knn2DQuestion({
           ),
         },
       ]
-      if (resolved) {
+      if (showAnswer) {
         infoPanels.push({
           title: 'Before and after',
           body: (
@@ -559,7 +548,7 @@ export function Knn2DQuestion({
           ),
         },
       ]
-      if (resolved) {
+      if (showAnswer) {
         infoPanels.push({
           title: 'Answer comparison',
           body: (
@@ -582,7 +571,7 @@ export function Knn2DQuestion({
         currentDataset.k,
         currentDataset.metric,
       ).label
-      const effectivePoint = candidatePoint ?? (resolved ? currentDataset.examplePoint.point : null)
+      const effectivePoint = candidatePoint
 
       stageQueryPoint = currentDataset.queryPoint
       currentMetric = currentDataset.metric
@@ -621,7 +610,7 @@ export function Knn2DQuestion({
           ),
         },
       ]
-      if (resolved) {
+      if (showAnswer) {
         infoPanels.push({
           title: 'What changed',
           body: (
@@ -672,7 +661,7 @@ export function Knn2DQuestion({
   }
 
   const handleStageClick = (event: MouseEvent<SVGSVGElement>) => {
-    if (resolved || question.interactionMode !== 'adversarialPlacement') {
+    if (question.interactionMode !== 'adversarialPlacement') {
       return
     }
 
@@ -848,62 +837,6 @@ export function Knn2DQuestion({
     }
   }
 
-  const revealAnswer = () => {
-    const draft = currentDraft()
-    switch (question.interactionMode) {
-      case 'decisionBoundary': {
-        const currentDataset = dataset as KnnDecisionBoundaryDataset
-        const currentStep = Math.min(stepIndex, currentDataset.kSequence.length - 1)
-        setPaintedCells(
-          classifyGridCells(
-            currentDataset.trainingPoints,
-            currentDataset.bounds,
-            currentDataset.gridColumns,
-            currentDataset.gridRows,
-            currentDataset.kSequence[currentStep],
-            currentDataset.metric,
-          ),
-        )
-        break
-      }
-
-      case 'bestK': {
-        const currentDataset = dataset as KnnBestKDataset
-        const revealedBestK = findBestK(
-          currentDataset.trainingPoints,
-          currentDataset.testPoints,
-          currentDataset.kValues,
-          currentDataset.metric,
-        ).k
-        setSelectedK(revealedBestK)
-        break
-      }
-
-      case 'scalingTrap': {
-        setStepIndex(1)
-        break
-      }
-
-      case 'metricComparison': {
-        setStepIndex(1)
-        break
-      }
-
-      case 'adversarialPlacement': {
-        const currentDataset = dataset as KnnAdversarialPlacementDataset
-        setCandidatePoint(currentDataset.examplePoint.point)
-        break
-      }
-
-      case 'predictSequence':
-      default:
-        break
-    }
-
-    setFeedback('Answer revealed. Compare the resolved prediction or boundary with your attempt.')
-    onGiveUp(draft)
-  }
-
   const zeroYVisible = stageBounds.minY <= 0 && stageBounds.maxY >= 0
   const zeroXVisible = stageBounds.minX <= 0 && stageBounds.maxX >= 0
   const xAxisY = zeroYVisible ? toStageY(0) : STAGE_SIZE - stageMargins.bottom
@@ -919,11 +852,8 @@ export function Knn2DQuestion({
       hints={hints}
       controls={
         <>
-          <button type="button" className="button" onClick={checkWork} disabled={resolved}>
+          <button type="button" className="button" onClick={checkWork}>
             {checkButtonLabel}
-          </button>
-          <button type="button" className="button-secondary" onClick={revealAnswer} disabled={resolved}>
-            Give up
           </button>
           <span className="pill">{currentViewLabel}</span>
           <span className="pill">Metric: {metricLabel(currentMetric)}</span>
@@ -951,7 +881,6 @@ export function Knn2DQuestion({
                 step="1"
                 value={selectedK}
                 onChange={(event) => setSelectedK(Number(event.target.value))}
-                disabled={resolved}
               />
               <span className="question-index-chip">k = {selectedK}</span>
             </label>
@@ -974,7 +903,6 @@ export function Knn2DQuestion({
                           : undefined,
                     }}
                     onClick={() => setSelectedLabel(classIndex)}
-                    disabled={resolved}
                   >
                     <span className="legend-swatch" style={{ background: classSpec.color }} />
                     <span>{classSpec.label}</span>
@@ -1001,7 +929,6 @@ export function Knn2DQuestion({
                           : undefined,
                     }}
                     onClick={() => setBrushLabel(classIndex)}
-                    disabled={resolved}
                   >
                     <span className="legend-swatch" style={{ background: classSpec.color }} />
                     <span>{classSpec.label}</span>
@@ -1063,23 +990,17 @@ export function Knn2DQuestion({
                       opacity={cellLabel === null ? 0.38 : 0.28}
                       stroke="rgba(72, 86, 93, 0.36)"
                       strokeWidth="1"
-                      role={resolved ? undefined : 'button'}
+                      role="button"
                       aria-label={`Cell row ${cell.row + 1} column ${cell.column + 1}`}
-                      tabIndex={resolved ? -1 : 0}
-                      className={resolved ? undefined : 'interactive-cell'}
+                      tabIndex={0}
+                      className="interactive-cell"
                       onClick={(event) => {
-                        if (resolved) {
-                          return
-                        }
                         event.stopPropagation()
                         setPaintedCells((current) =>
                           current.map((value, index) => (index === cell.index ? brushLabel : value)),
                         )
                       }}
                       onKeyDown={(event) => {
-                        if (resolved) {
-                          return
-                        }
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault()
                           setPaintedCells((current) =>

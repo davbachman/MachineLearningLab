@@ -27,7 +27,6 @@ describe('Knn2DQuestion', () => {
         totalQuestions={knnAssignment.questions.length}
         hints={[]}
         onAttempt={onAttempt}
-        onGiveUp={vi.fn()}
       />,
     )
 

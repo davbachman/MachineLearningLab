@@ -25,7 +25,6 @@ interface Pca3DQuestionProps {
   totalQuestions: number
   hints: string[]
   onAttempt: (outcome: AttemptOutcome, answer: unknown) => void
-  onGiveUp: (answer: unknown) => void
 }
 
 function PlaneMesh({ first, second, color, opacity }: { first: Vec3; second: Vec3; color: string; opacity: number }) {
@@ -141,7 +140,6 @@ export function Pca3DQuestion({
   totalQuestions,
   hints,
   onAttempt,
-  onGiveUp,
 }: Pca3DQuestionProps) {
   const dataset = pca3dDatasets[question.datasetId]
   const [azimuth, setAzimuth] = useState(radians(question.initialAzimuthDeg))
@@ -149,21 +147,17 @@ export function Pca3DQuestion({
   const [roll, setRoll] = useState(radians(question.initialRollDeg))
   const [feedback, setFeedback] = useState('')
   const [dragging, setDragging] = useState(false)
-  const resolved = state.status === 'correct' || state.status === 'gave_up'
+  const showAnswer = state.status === 'correct' || state.status === 'gave_up'
   const answerAngles = sphericalFromDirection(dataset.answerFirst)
   const answerRoll = rollForSecondDirection(dataset.answerFirst, dataset.answerSecond)
-  const displayAzimuth = resolved ? answerAngles.azimuth : azimuth
-  const displayElevation = resolved ? answerAngles.elevation : elevation
-  const displayRoll = resolved ? answerRoll : roll
+  const displayAzimuth = azimuth
+  const displayElevation = elevation
+  const displayRoll = roll
   const first = directionFromSpherical(displayAzimuth, displayElevation)
   const second = orthonormalBasisAround(first, displayRoll).second
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (resolved) {
-        return
-      }
-
       if (event.key === 'ArrowLeft') {
         event.preventDefault()
         setRoll((current) => current - radians(7))
@@ -177,13 +171,9 @@ export function Pca3DQuestion({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [resolved])
+  }, [])
 
   const updateFromDrag = (movementX: number, movementY: number) => {
-    if (resolved) {
-      return
-    }
-
     setAzimuth((current) => current + movementX * 0.012)
     setElevation((current) => {
       const next = current - movementY * 0.01
@@ -213,14 +203,6 @@ export function Pca3DQuestion({
     onAttempt('incorrect', { first, second })
   }
 
-  const revealAnswer = () => {
-    setAzimuth(answerAngles.azimuth)
-    setElevation(answerAngles.elevation)
-    setRoll(answerRoll)
-    setFeedback('Answer revealed. The highlighted plane spans the top two principal directions.')
-    onGiveUp({ first, second })
-  }
-
   const projectedPoints = dataset.points.map((point) => projectPointOntoPlaneBasis(point, first, second))
   const domain = Math.max(
     4.2,
@@ -244,11 +226,8 @@ export function Pca3DQuestion({
       hints={hints}
       controls={
         <>
-          <button type="button" className="button" onClick={checkPlane} disabled={resolved}>
+          <button type="button" className="button" onClick={checkPlane}>
             Check this plane
-          </button>
-          <button type="button" className="button-secondary" onClick={revealAnswer} disabled={resolved}>
-            Give up
           </button>
           <span className="pill">Variance kept: {(retainedVariance * 100).toFixed(1)}%</span>
           <span className="pill">PC1 error: {firstDirectionError.toFixed(1)}°</span>
@@ -282,7 +261,7 @@ export function Pca3DQuestion({
                   second={second}
                   answerFirst={dataset.answerFirst}
                   answerSecond={dataset.answerSecond}
-                  showAnswer={resolved}
+                  showAnswer={showAnswer}
                 />
               </Canvas>
             </div>

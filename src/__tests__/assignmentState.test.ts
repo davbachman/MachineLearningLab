@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { pcaAssignment } from '../data/pcaAssignment'
 import {
   applyAttemptOutcome,
-  applyGiveUp,
   createInitialAssignmentState,
   getVisibleHints,
   hydrateAssignmentState,
@@ -10,13 +9,12 @@ import {
 } from '../lib/assignmentState'
 
 describe('assignmentState', () => {
-  it('starts with only the first question active', () => {
+  it('starts with every question available', () => {
     const state = createInitialAssignmentState(pcaAssignment)
-    expect(state.questionStates[0].status).toBe('active')
-    expect(state.questionStates[1].status).toBe('locked')
+    expect(state.questionStates.every((questionState) => questionState.status === 'active')).toBe(true)
   })
 
-  it('unlocks hints based on incorrect attempts and unlocks the next question on success', () => {
+  it('unlocks hints based on incorrect attempts and preserves free navigation on success', () => {
     let state = createInitialAssignmentState(pcaAssignment)
     const question = pcaAssignment.questions[0]
 
@@ -38,22 +36,25 @@ describe('assignmentState', () => {
     expect(state.questionStates[1].status).toBe('active')
   })
 
-  it('records give up without adding an attempt and unlocks the next question', () => {
+  it('reopens a completed question when a redo attempt is incorrect', () => {
     let state = createInitialAssignmentState(pcaAssignment)
-    state = applyGiveUp(state, pcaAssignment, 0, { direction: [0.25, 0.97] })
+    state = applyAttemptOutcome(state, pcaAssignment, 0, 'correct', { direction: [0.6, 0.8] })
+    state = applyAttemptOutcome(state, pcaAssignment, 0, 'incorrect', { direction: [1, 0] })
 
-    expect(state.questionStates[0].status).toBe('gave_up')
-    expect(state.questionStates[0].attempts).toBe(0)
-    expect(state.questionStates[0].latestAnswer).toEqual({ direction: [0.25, 0.97] })
-    expect(state.questionStates[0].attemptHistory).toEqual([])
-    expect(state.questionStates[1].status).toBe('active')
+    expect(state.questionStates[0].status).toBe('active')
+    expect(state.questionStates[0].attempts).toBe(2)
+    expect(state.questionStates[0].latestAnswer).toEqual({ direction: [1, 0] })
+    expect(state.questionStates[0].attemptHistory.map((attempt) => attempt.outcome)).toEqual([
+      'correct',
+      'incorrect',
+    ])
   })
 
   it('detects when an assignment is fully resolved', () => {
     let state = createInitialAssignmentState(pcaAssignment)
 
     for (let index = 0; index < pcaAssignment.questions.length; index += 1) {
-      state = applyGiveUp(state, pcaAssignment, index)
+      state = applyAttemptOutcome(state, pcaAssignment, index, 'correct', { answer: index })
     }
 
     expect(isAssignmentComplete(state)).toBe(true)
@@ -66,5 +67,14 @@ describe('assignmentState', () => {
 
     expect(hydrated.assignmentVersion).toBe(revisedAssignment.version)
     expect(hydrated.questionStates[0].attemptHistory).toEqual([])
+  })
+
+  it('migrates legacy locked questions to available questions', () => {
+    const saved = createInitialAssignmentState(pcaAssignment)
+    saved.questionStates[1] = { ...saved.questionStates[1], status: 'locked' }
+
+    const hydrated = hydrateAssignmentState(pcaAssignment, saved)
+
+    expect(hydrated.questionStates[1].status).toBe('active')
   })
 })

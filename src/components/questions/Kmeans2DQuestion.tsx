@@ -21,7 +21,6 @@ interface Kmeans2DQuestionProps {
   totalQuestions: number
   hints: string[]
   onAttempt: (outcome: AttemptOutcome, answer: unknown) => void
-  onGiveUp: (answer: unknown) => void
 }
 
 const STAGE_SIZE = 420
@@ -76,7 +75,6 @@ export function Kmeans2DQuestion({
   totalQuestions,
   hints,
   onAttempt,
-  onGiveUp,
 }: Kmeans2DQuestionProps) {
   const dataset = kmeansInteractiveDatasets[question.datasetId]
   const svgRef = useRef<SVGSVGElement | null>(null)
@@ -91,7 +89,7 @@ export function Kmeans2DQuestion({
   const [stepIndex, setStepIndex] = useState(0)
   const [feedback, setFeedback] = useState('')
   const [draggingCentroidIndex, setDraggingCentroidIndex] = useState<number | null>(null)
-  const resolved = state.status === 'correct' || state.status === 'gave_up'
+  const showAnswer = state.status === 'correct' || state.status === 'gave_up'
   const currentSchedule = question.hintSchedule ?? DEFAULT_HINT_SCHEDULE
   const unlockedHintCount = hints.length
   const isLloydIteration = question.interactionMode === 'lloydIteration'
@@ -135,26 +133,21 @@ export function Kmeans2DQuestion({
         : dataset.metric
       : dataset.metric
 
-  const shownCentroids =
-    resolved && question.interactionMode !== 'assignPoints'
-      ? cloneCentroids(dataset.targetCentroids ?? dataset.fixedCentroids ?? centroids)
-      : cloneCentroids(dataset.fixedCentroids ?? centroids)
+  const shownCentroids = cloneCentroids(dataset.fixedCentroids ?? centroids)
 
   const shownAssignments =
-    resolved && dataset.targetAssignments
-      ? dataset.targetAssignments
-      : question.interactionMode === 'assignPoints'
-        ? assignments
-        : question.interactionMode === 'lloydIteration'
-          ? currentPhase === 'assignments'
-            ? assignments
-            : (iterationAssignments[currentIteration] ?? assignments)
-          : question.interactionMode === 'metricComparison'
-            ? assignments
-          : dataset.displayAssignments ??
-            (shownCentroids.length === dataset.k
-              ? assignPointsToCentroids(dataset.points, shownCentroids, dataset.metric)
-              : Array.from({ length: dataset.points.length }, () => -1))
+    question.interactionMode === 'assignPoints'
+      ? assignments
+      : question.interactionMode === 'lloydIteration'
+        ? currentPhase === 'assignments'
+          ? assignments
+          : (iterationAssignments[currentIteration] ?? assignments)
+        : question.interactionMode === 'metricComparison'
+          ? assignments
+        : dataset.displayAssignments ??
+          (shownCentroids.length === dataset.k
+            ? assignPointsToCentroids(dataset.points, shownCentroids, dataset.metric)
+            : Array.from({ length: dataset.points.length }, () => -1))
 
   const domain = computeDomain(
     dataset.points,
@@ -193,20 +186,19 @@ export function Kmeans2DQuestion({
   }
 
   const clickablePoints =
-    !resolved &&
     (question.interactionMode === 'assignPoints' ||
       question.interactionMode === 'metricComparison' ||
       (question.interactionMode === 'lloydIteration' && currentPhase === 'assignments'))
 
   const draggableCentroids =
-    !resolved &&
     (question.interactionMode === 'placeCentroids' ||
       question.interactionMode === 'updateCentroids' ||
       (question.interactionMode === 'lloydIteration' && currentPhase === 'centroids'))
 
   const showRegions =
     shownCentroids.length === dataset.k &&
-    (dataset.regionVisibility === 'always' || (dataset.regionVisibility === 'resolved' && resolved))
+    (dataset.regionVisibility === 'always' ||
+      (dataset.regionVisibility === 'resolved' && showAnswer))
 
   const currentObjective =
     shownCentroids.length === dataset.k && shownAssignments.every((assignment) => assignment >= 0)
@@ -319,36 +311,6 @@ export function Kmeans2DQuestion({
     onAttempt('progress', submission)
   }
 
-  const revealAnswer = () => {
-    const draft = question.interactionMode === 'lloydIteration'
-      ? {
-          step: currentPhase,
-          iteration: currentIteration,
-          assignments,
-          centroids,
-        }
-      : question.interactionMode === 'metricComparison'
-        ? { step: currentPhase, assignments }
-        : question.interactionMode === 'assignPoints'
-          ? { assignments }
-          : { centroids }
-    if (dataset.targetCentroids) {
-      setCentroids(cloneCentroids(dataset.targetCentroids))
-    }
-    if (dataset.targetAssignments) {
-      setAssignments(dataset.targetAssignments)
-    }
-    if (question.interactionMode === 'lloydIteration') {
-      setStepIndex(totalLloydIterations * 2 - 1)
-    }
-    if (question.interactionMode === 'metricComparison' && dataset.comparisonAssignments) {
-      setAssignments(dataset.comparisonAssignments)
-      setStepIndex(1)
-    }
-    setFeedback('Answer revealed. Compare the highlighted clustering with your attempt.')
-    onGiveUp(draft)
-  }
-
   const updateCentroidFromPointer = (clientX: number, clientY: number) => {
     const world = fromEventToWorld(clientX, clientY)
     if (world === null || draggingCentroidIndex === null) {
@@ -361,7 +323,7 @@ export function Kmeans2DQuestion({
   }
 
   const handleStageClick = (event: MouseEvent<SVGSVGElement>) => {
-    if (resolved || question.interactionMode !== 'placeCentroids') {
+    if (question.interactionMode !== 'placeCentroids') {
       return
     }
 
@@ -488,11 +450,8 @@ export function Kmeans2DQuestion({
       hints={displayedHints}
       controls={
         <>
-          <button type="button" className="button" onClick={checkWork} disabled={resolved}>
+          <button type="button" className="button" onClick={checkWork}>
             {checkButtonLabel}
-          </button>
-          <button type="button" className="button-secondary" onClick={revealAnswer} disabled={resolved}>
-            Give up
           </button>
           <span className="pill">Metric: {metricLabel(activeMetric)}</span>
           {currentObjective !== null ? (
@@ -547,7 +506,7 @@ export function Kmeans2DQuestion({
               strokeWidth="1.2"
             />
 
-            {resolved && dataset.initialCentroids && dataset.targetCentroids
+            {showAnswer && dataset.initialCentroids && dataset.targetCentroids
               ? dataset.initialCentroids.map((centroid, index) => {
                   const target = dataset.targetCentroids?.[index]
                   if (!target) {
@@ -569,7 +528,7 @@ export function Kmeans2DQuestion({
                 })
               : null}
 
-            {resolved && dataset.comparisonCentroids
+            {showAnswer && dataset.comparisonCentroids
               ? dataset.comparisonCentroids.map((centroid, index) => (
                   <g key={`${question.id}-comparison-centroid-${index}`}>
                     <circle
@@ -682,7 +641,8 @@ export function Kmeans2DQuestion({
                         .map((value, index) => `after assignment ${index + 1}: ${formatObjective(value)}`)
                         .join(' | ')
                     : `Before update: ${formatObjective(dataset.objectiveBefore)}${
-                        dataset.objectiveAfter !== undefined && (resolved || currentPhase === 'centroids')
+                        dataset.objectiveAfter !== undefined &&
+                        (showAnswer || currentPhase === 'centroids')
                           ? ` | After update: ${formatObjective(dataset.objectiveAfter)}`
                           : ''
                       }`}
@@ -690,7 +650,7 @@ export function Kmeans2DQuestion({
               </div>
             ) : null}
 
-            {resolved && dataset.comparisonLabel ? (
+            {showAnswer && dataset.comparisonLabel ? (
               <div className="status-panel">
                 <h4>Ghost comparison</h4>
                 <p className="reveal-copy">{dataset.comparisonLabel}</p>

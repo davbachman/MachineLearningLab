@@ -19,7 +19,6 @@ interface Pca2DQuestionProps {
   totalQuestions: number
   hints: string[]
   onAttempt: (outcome: AttemptOutcome, answer: unknown) => void
-  onGiveUp: (answer: unknown) => void
 }
 
 const VIEW_SIZE = 360
@@ -41,17 +40,16 @@ export function Pca2DQuestion({
   totalQuestions,
   hints,
   onAttempt,
-  onGiveUp,
 }: Pca2DQuestionProps) {
   const dataset = pca2dDatasets[question.datasetId]
   const svgRef = useRef<SVGSVGElement | null>(null)
   const [angle, setAngle] = useState(radians(question.initialAngleDeg))
   const [feedback, setFeedback] = useState('')
   const [dragging, setDragging] = useState(false)
-  const resolved = state.status === 'correct' || state.status === 'gave_up'
+  const showAnswer = state.status === 'correct' || state.status === 'gave_up'
 
   const answerAngle = Math.atan2(dataset.answerDirection[1], dataset.answerDirection[0])
-  const displayAngle = resolved ? answerAngle : angle
+  const displayAngle = angle
   const direction: Vec2 = [Math.cos(displayAngle), Math.sin(displayAngle)]
   const projectedPoints = dataset.points.map((point) => projectPointOntoLine2D(point, direction))
   const projectedScalars = dataset.points.map((point) => projectScalarOntoLine2D(point, direction))
@@ -82,7 +80,7 @@ export function Pca2DQuestion({
   const toSvgY = (value: number) => VIEW_SIZE / 2 - (value / domain) * ((VIEW_SIZE - VIEW_PADDING * 2) / 2)
 
   const updateAngleFromEvent = (clientX: number, clientY: number) => {
-    if (!svgRef.current || resolved) {
+    if (!svgRef.current) {
       return
     }
 
@@ -93,10 +91,6 @@ export function Pca2DQuestion({
   }
 
   const handlePointerDown = (event: React.PointerEvent<SVGSVGElement>) => {
-    if (resolved) {
-      return
-    }
-
     event.currentTarget.setPointerCapture(event.pointerId)
     setDragging(true)
     updateAngleFromEvent(event.clientX, event.clientY)
@@ -140,12 +134,6 @@ export function Pca2DQuestion({
     onAttempt('incorrect', { direction })
   }
 
-  const revealAnswer = () => {
-    setAngle(answerAngle)
-    setFeedback('Answer revealed. Compare the highlighted answer with your last guess.')
-    onGiveUp({ direction })
-  }
-
   const projectionX = (value: number) =>
     VIEW_SIZE / 2 + (value / projectionDomain) * ((VIEW_SIZE - 68) / 2)
 
@@ -165,11 +153,8 @@ export function Pca2DQuestion({
       hints={hints}
       controls={
         <>
-          <button type="button" className="button" onClick={checkDirection} disabled={resolved}>
+          <button type="button" className="button" onClick={checkDirection}>
             Check this direction
-          </button>
-          <button type="button" className="button-secondary" onClick={revealAnswer} disabled={resolved}>
-            Give up
           </button>
           <span className="pill">
             {scoreLabel}: {(scoreRatio * 100).toFixed(1)}%
@@ -197,7 +182,7 @@ export function Pca2DQuestion({
             <line x1="0" y1={VIEW_SIZE / 2} x2={VIEW_SIZE} y2={VIEW_SIZE / 2} stroke="#d7d0c3" strokeWidth="1.4" />
             <line x1={VIEW_SIZE / 2} y1="0" x2={VIEW_SIZE / 2} y2={VIEW_SIZE} stroke="#d7d0c3" strokeWidth="1.4" />
 
-            {resolved ? (
+            {showAnswer ? (
               <line
                 x1={toSvgX(answerLine.x1)}
                 y1={toSvgY(answerLine.y1)}
@@ -210,7 +195,7 @@ export function Pca2DQuestion({
               />
             ) : null}
 
-            {resolved && comparisonLine ? (
+            {showAnswer && comparisonLine ? (
               <line
                 x1={toSvgX(comparisonLine.x1)}
                 y1={toSvgY(comparisonLine.y1)}
@@ -271,7 +256,7 @@ export function Pca2DQuestion({
               <span className="legend-swatch" style={{ background: '#cc7c31' }} />
               <span className="legend-label">Projected points</span>
             </span>
-            {resolved && comparisonLine ? (
+            {showAnswer && comparisonLine ? (
               <span className="legend-chip">
                 <span className="legend-swatch" style={{ background: '#cc7c31', opacity: 0.8 }} />
                 <span className="legend-label">{dataset.comparisonLabel}</span>

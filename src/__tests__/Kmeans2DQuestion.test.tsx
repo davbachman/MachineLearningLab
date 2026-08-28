@@ -29,7 +29,6 @@ describe('Kmeans2DQuestion', () => {
         totalQuestions={kmeansAssignment.questions.length}
         hints={[]}
         onAttempt={onAttempt}
-        onGiveUp={vi.fn()}
       />,
     )
 

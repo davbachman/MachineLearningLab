@@ -27,7 +27,6 @@ describe('TableEntryQuestion', () => {
         totalQuestions={pcaAssignment.questions.length}
         hints={[]}
         onAttempt={onAttempt}
-        onGiveUp={vi.fn()}
       />,
     )
 

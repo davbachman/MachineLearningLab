@@ -19,18 +19,6 @@ import {
   type RandomForestVarianceDataset,
   type RandomForestVoteGeometryDataset,
 } from '../../data/randomForestDatasets'
-import {
-  aggregateOobPredictions,
-  bootstrapMultiplicities,
-  correlatedEnsembleVariance,
-  findBestStump,
-  majorityVote,
-  oobAccuracy,
-  outOfBagIds,
-  predictForest,
-  predictStump,
-  trainedStumpFromEvaluation,
-} from '../../lib/randomForestMath'
 import { DEFAULT_HINT_SCHEDULE } from '../../lib/assignmentState'
 
 interface RandomForestQuestionProps {
@@ -40,7 +28,6 @@ interface RandomForestQuestionProps {
   totalQuestions: number
   hints: string[]
   onAttempt: (outcome: AttemptOutcome, answer: unknown) => void
-  onGiveUp: (answer: unknown) => void
 }
 
 interface PlotLine extends RandomForestSplitCandidate {
@@ -900,7 +887,6 @@ export function RandomForestQuestion({
   totalQuestions,
   hints,
   onAttempt,
-  onGiveUp,
 }: RandomForestQuestionProps) {
   const dataset = randomForestDatasets[question.datasetId]
   const [feedback, setFeedback] = useState('')
@@ -927,7 +913,6 @@ export function RandomForestQuestion({
   const [featureStatementId, setFeatureStatementId] = useState<string | undefined>()
   const [predictionStatementId, setPredictionStatementId] = useState<string | undefined>()
   const [aggregationStatementId, setAggregationStatementId] = useState<string | undefined>()
-  const resolved = state.status === 'correct' || state.status === 'gave_up'
   const schedule = question.hintSchedule ?? DEFAULT_HINT_SCHEDULE
 
   const buildSubmission = (): unknown => {
@@ -994,121 +979,6 @@ export function RandomForestQuestion({
     onAttempt('correct', submission)
   }
 
-  const revealAnswer = () => {
-    const draft = buildSubmission()
-
-    if (dataset.kind === 'bootstrapAudit') {
-      const rowIds = dataset.rows.map((row) => row.id)
-      setMultiplicityInputs(
-        Object.fromEntries(
-          Object.entries(bootstrapMultiplicities(rowIds, dataset.draws)).map(([id, count]) => [
-            id,
-            String(count),
-          ]),
-        ),
-      )
-      setBootstrapOobIds(outOfBagIds(rowIds, dataset.draws))
-    }
-
-    if (dataset.kind === 'featureSubsamplingGeometry') {
-      const nextSplits: Record<string, string> = {}
-      const trained = new Map(
-        dataset.trees.map((tree) => {
-          const best = findBestStump(dataset.rows, tree.candidates, tree.draws)
-          nextSplits[tree.id] = best.candidate.id
-          return [tree.id, trainedStumpFromEvaluation(best)]
-        }),
-      )
-      setSelectedSplits(nextSplits)
-      setFeaturePredictions(
-        Object.fromEntries(
-          dataset.probes.map((probe) => [
-            probe.id,
-            Object.fromEntries(
-              dataset.trees.map((tree) => [
-                tree.id,
-                predictStump(trained.get(tree.id)!, probe),
-              ]),
-            ),
-          ]),
-        ),
-      )
-    }
-
-    if (dataset.kind === 'forestVoteGeometry') {
-      setForestPredictions(
-        Object.fromEntries(
-          dataset.probes.map((probe) => [probe.id, predictForest(dataset.trees, probe)]),
-        ),
-      )
-    }
-
-    if (dataset.kind === 'oobEstimate') {
-      setOobPredictions(
-        Object.fromEntries(
-          aggregateOobPredictions(
-            dataset.rows.map((row) => row.id),
-            dataset.trees,
-          ).map((entry) => [entry.rowId, entry.prediction ?? 0]),
-        ),
-      )
-      setOobAccuracyInput(String(oobAccuracy(dataset.rows, dataset.trees)))
-    }
-
-    if (dataset.kind === 'varianceReduction') {
-      const values = Object.fromEntries(
-        dataset.scenarios.map((scenario) => [
-          scenario.id,
-          correlatedEnsembleVariance(
-            dataset.singleTreeVariance,
-            scenario.correlation,
-            scenario.treeCount,
-          ),
-        ]),
-      )
-      setVarianceInputs(
-        Object.fromEntries(
-          Object.entries(values).map(([scenarioId, value]) => [scenarioId, value.toFixed(3)]),
-        ),
-      )
-      setBestScenarioId(
-        dataset.scenarios.reduce((best, scenario) =>
-          values[scenario.id] < values[best.id] ? scenario : best,
-        ).id,
-      )
-      setInterventionId('feature-subsampling')
-    }
-
-    if (dataset.kind === 'codeTrace') {
-      const rowsById = new Map(dataset.rows.map((row) => [row.id, row]))
-      setCodeOobIds(
-        outOfBagIds(
-          dataset.rows.map((row) => row.id),
-          dataset.bootstrapDraws,
-        ),
-      )
-      setTrainingFeatureValues(
-        dataset.bootstrapDraws
-          .flatMap((rowId) =>
-            dataset.selectedFeatureIndices.map(
-              (featureIndex) => rowsById.get(rowId)!.features[featureIndex],
-            ),
-          )
-          .join(', '),
-      )
-      setQueryProjection(
-        dataset.selectedFeatureIndices.map((featureIndex) => dataset.query[featureIndex]).join(', '),
-      )
-      setCodeForestLabel(majorityVote(dataset.treeVotes))
-      setFeatureStatementId('S3')
-      setPredictionStatementId('S5')
-      setAggregationStatementId('S7')
-    }
-
-    setFeedback('Answer revealed. Compare each structured field with your draft.')
-    onGiveUp(draft)
-  }
-
   let body = null
 
   if (dataset.kind === 'bootstrapAudit') {
@@ -1117,7 +987,7 @@ export function RandomForestQuestion({
         dataset={dataset}
         counts={multiplicityInputs}
         oobIds={bootstrapOobIds}
-        disabled={resolved}
+        disabled={false}
         onCountChange={(rowId, value) =>
           setMultiplicityInputs((current) => ({ ...current, [rowId]: value }))
         }
@@ -1132,7 +1002,7 @@ export function RandomForestQuestion({
         dataset={dataset}
         selectedSplits={selectedSplits}
         predictions={featurePredictions}
-        disabled={resolved}
+        disabled={false}
         onSplitChange={(treeId, splitId) =>
           setSelectedSplits((current) => ({ ...current, [treeId]: splitId }))
         }
@@ -1151,7 +1021,7 @@ export function RandomForestQuestion({
       <ForestVotePanel
         dataset={dataset}
         predictions={forestPredictions}
-        disabled={resolved}
+        disabled={false}
         onPredictionChange={(probeId, label) =>
           setForestPredictions((current) => ({ ...current, [probeId]: label }))
         }
@@ -1165,7 +1035,7 @@ export function RandomForestQuestion({
         dataset={dataset}
         predictions={oobPredictions}
         accuracy={oobAccuracyInput}
-        disabled={resolved}
+        disabled={false}
         onPredictionChange={(rowId, label) =>
           setOobPredictions((current) => ({ ...current, [rowId]: label }))
         }
@@ -1181,7 +1051,7 @@ export function RandomForestQuestion({
         variances={varianceInputs}
         bestScenarioId={bestScenarioId}
         interventionId={interventionId}
-        disabled={resolved}
+        disabled={false}
         onVarianceChange={(scenarioId, value) =>
           setVarianceInputs((current) => ({ ...current, [scenarioId]: value }))
         }
@@ -1202,7 +1072,7 @@ export function RandomForestQuestion({
         featureStatementId={featureStatementId}
         predictionStatementId={predictionStatementId}
         aggregationStatementId={aggregationStatementId}
-        disabled={resolved}
+        disabled={false}
         onToggleOob={(rowId) => setCodeOobIds((current) => toggleId(current, rowId))}
         onTrainingFeatureValuesChange={setTrainingFeatureValues}
         onQueryProjectionChange={setQueryProjection}
@@ -1224,11 +1094,8 @@ export function RandomForestQuestion({
       hints={hints}
       controls={
         <>
-          <button type="button" className="button" onClick={checkWork} disabled={resolved}>
+          <button type="button" className="button" onClick={checkWork}>
             Check answer
-          </button>
-          <button type="button" className="button-secondary" onClick={revealAnswer} disabled={resolved}>
-            Give up
           </button>
         </>
       }

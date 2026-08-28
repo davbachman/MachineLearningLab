@@ -292,19 +292,33 @@
 
 .progress-item {
   display: grid;
+  width: 100%;
   gap: 0.35rem;
   padding: 0.8rem 0.85rem;
+  border: 1px solid transparent;
   border-radius: 18px;
   background: rgba(247, 243, 235, 0.92);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+.progress-item:hover {
+  border-color: rgba(28, 123, 138, 0.2);
+  background: rgba(236, 246, 246, 0.9);
+  transform: translateY(-1px);
+}
+
+.progress-item:focus-visible {
+  outline: 3px solid rgba(28, 123, 138, 0.3);
+  outline-offset: 2px;
 }
 
 .progress-item.active {
   border: 1px solid rgba(28, 123, 138, 0.24);
   background: rgba(227, 244, 247, 0.82);
-}
-
-.progress-item.locked {
-  opacity: 0.56;
 }
 
 .progress-label {

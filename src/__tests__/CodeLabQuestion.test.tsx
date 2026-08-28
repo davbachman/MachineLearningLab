@@ -34,7 +34,6 @@ describe('CodeLabQuestion', () => {
         totalQuestions={7}
         hints={[]}
         onAttempt={vi.fn()}
-        onGiveUp={vi.fn()}
       />,
     )
 
@@ -56,7 +55,6 @@ describe('CodeLabQuestion', () => {
         totalQuestions={7}
         hints={[]}
         onAttempt={vi.fn()}
-        onGiveUp={vi.fn()}
       />,
     )
 
@@ -83,7 +81,6 @@ describe('CodeLabQuestion', () => {
         totalQuestions={7}
         hints={[]}
         onAttempt={onAttempt}
-        onGiveUp={vi.fn()}
       />,
     )
 
@@ -110,35 +107,21 @@ describe('CodeLabQuestion', () => {
     expect(screen.getAllByText(/Correct:.*single principal direction.*\[-1, 1\]/)).toHaveLength(2)
   })
 
-  it('records the current pre-reveal draft when the student gives up', async () => {
-    const user = userEvent.setup()
-    const onGiveUp = vi.fn()
-
+  it('has no give-up action and lets a completed lab start again', () => {
     render(
       <CodeLabQuestion
         question={pcaCodeLab}
-        state={activeState}
+        state={{ ...activeState, status: 'correct', resolvedAt: '2026-08-27T12:00:00.000Z' }}
         questionNumber={7}
         totalQuestions={7}
         hints={[]}
         onAttempt={vi.fn()}
-        onGiveUp={onGiveUp}
       />,
     )
 
-    await user.click(screen.getByRole('radio', { name: '(1, 2)' }))
-    await user.click(screen.getByRole('button', { name: 'Give up' }))
-
-    expect(onGiveUp).toHaveBeenCalledWith({
-      formatVersion: 1,
-      questionId: 'pca-code-lab',
-      variantId: 'pca-notebook-v1',
-      stages: {
-        TRACE: { BASIS_SHAPE: 'SHAPE_1_2' },
-        MUTATION: {},
-        TEST: {},
-      },
-    })
+    expect(screen.queryByRole('button', { name: /give up/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Check predicted trace' })).toBeEnabled()
+    expect(screen.getByRole('radio', { name: '(1, 2)' })).toBeEnabled()
   })
 
   it('returns one complete autograder-ready payload after all three stages', async () => {
@@ -153,7 +136,6 @@ describe('CodeLabQuestion', () => {
         totalQuestions={7}
         hints={[]}
         onAttempt={onAttempt}
-        onGiveUp={vi.fn()}
       />,
     )
 
@@ -193,7 +175,6 @@ describe('CodeLabQuestion', () => {
         totalQuestions={7}
         hints={[]}
         onAttempt={vi.fn()}
-        onGiveUp={vi.fn()}
       />,
     )
 

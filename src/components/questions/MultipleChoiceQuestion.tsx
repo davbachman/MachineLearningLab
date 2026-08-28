@@ -22,7 +22,6 @@ interface MultipleChoiceQuestionProps {
   totalQuestions: number
   hints: string[]
   onAttempt: (outcome: AttemptOutcome, answer: unknown) => void
-  onGiveUp: (answer: unknown) => void
 }
 
 const VIEW_SIZE = 300
@@ -273,17 +272,25 @@ export function MultipleChoiceQuestion({
   totalQuestions,
   hints,
   onAttempt,
-  onGiveUp,
 }: MultipleChoiceQuestionProps) {
   const dataset = multipleChoiceDatasets[question.datasetId]
-  const [selectedIds, setSelectedIds] = useState<Record<string, string | undefined>>({})
+  const [selectedIds, setSelectedIds] = useState<Record<string, string | undefined>>(() => {
+    if (
+      state.latestAnswer &&
+      typeof state.latestAnswer === 'object' &&
+      !Array.isArray(state.latestAnswer) &&
+      state.latestAnswer.selectedIds &&
+      typeof state.latestAnswer.selectedIds === 'object' &&
+      !Array.isArray(state.latestAnswer.selectedIds)
+    ) {
+      return state.latestAnswer.selectedIds as Record<string, string | undefined>
+    }
+    return {}
+  })
   const [feedback, setFeedback] = useState('')
-  const resolved = state.status === 'correct' || state.status === 'gave_up'
+  const showComparison = state.status === 'correct' || state.status === 'gave_up'
   const schedule = question.hintSchedule ?? DEFAULT_HINT_SCHEDULE
-  const answerSelections = Object.fromEntries(
-    question.parts.map((part) => [part.id, part.correctOptionId]),
-  ) as Record<string, string | undefined>
-  const activeSelections = resolved ? answerSelections : selectedIds
+  const activeSelections = selectedIds
 
   const checkChoice = () => {
     const result = question.validator({ selectedIds: activeSelections })
@@ -302,12 +309,6 @@ export function MultipleChoiceQuestion({
     onAttempt('incorrect', { selectedIds: activeSelections })
   }
 
-  const revealAnswer = () => {
-    setSelectedIds(answerSelections)
-    setFeedback('Answer revealed. Compare the highlighted choices with the visual on the left.')
-    onGiveUp({ selectedIds })
-  }
-
   return (
     <QuestionFrame
       question={question}
@@ -317,23 +318,18 @@ export function MultipleChoiceQuestion({
       feedback={feedback}
       hints={hints}
       controls={
-        <>
-          <button
-            type="button"
-            className="button"
-            onClick={checkChoice}
-            disabled={resolved || question.parts.some((part) => !activeSelections[part.id])}
-          >
-            Check answer
-          </button>
-          <button type="button" className="button-secondary" onClick={revealAnswer} disabled={resolved}>
-            Give up
-          </button>
-        </>
+        <button
+          type="button"
+          className="button"
+          onClick={checkChoice}
+          disabled={question.parts.some((part) => !activeSelections[part.id])}
+        >
+          Check answer
+        </button>
       }
     >
       <div className="table-shell">
-        <DatasetPanel dataset={dataset} resolved={resolved} />
+        <DatasetPanel dataset={dataset} resolved={showComparison} />
 
         <section className="answer-panel">
           <h3 className="panel-title">
@@ -364,7 +360,6 @@ export function MultipleChoiceQuestion({
                           [part.id]: option.id,
                         }))
                       }
-                      disabled={resolved}
                     />
                     <span className="choice-copy">
                       <strong>{option.title}</strong>

@@ -1,4 +1,5 @@
 import type { AssignmentSpec } from '../types'
+import { withBalancedChoiceOrder } from '../lib/choiceOrder'
 import { decisionTreeAssignment } from './decisionTreeAssignment'
 import { kmeansAssignment } from './kmeansAssignment'
 import { knnAssignment } from './knnAssignment'
@@ -15,7 +16,7 @@ export const assignmentRegistry: AssignmentSpec[] = [
   decisionTreeAssignment,
   randomForestAssignment,
   ...notebookAssignments,
-]
+].map(withBalancedChoiceOrder)
 
 export const publishedAssignments = assignmentRegistry.filter((assignment) => assignment.published)
 

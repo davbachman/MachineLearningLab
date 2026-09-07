@@ -66,9 +66,9 @@ const multiIterationPoints: Vec2[] = [
 ]
 
 const multiIterationInitialCentroids: Vec2[] = [
-  [-6, -1],
-  [0, 4],
-  [6, 0],
+  [-7, 2],
+  [-2, -6],
+  [7, 2],
 ]
 
 function buildLloydSequence(points: Vec2[], initialCentroids: Vec2[], k: number) {

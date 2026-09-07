@@ -5,7 +5,7 @@ import { getCorrectCodeLabSubmission } from '../lib/codeLab'
 
 describe('kmeansAssignment validators', () => {
   it('ends with a lab grounded in the renamed k-means notebook', () => {
-    expect(kmeansAssignment.version).toBe(6)
+    expect(kmeansAssignment.version).toBe(7)
     const lab = kmeansAssignment.questions.at(-1)
     if (lab?.kind !== 'codeLab') {
       throw new Error('Expected the final k-means question to be a Notebook Lab.')
@@ -79,6 +79,18 @@ describe('kmeansAssignment validators', () => {
         centroids: dataset.initialCentroids,
       }).correct,
     ).toBe(false)
+  })
+
+  it('starts with one clear label per visible cloud while retaining a later reassignment', () => {
+    const rounds = kmeansInteractiveDatasets.fullIteration.iterationAssignments ?? []
+
+    expect(rounds[0]?.slice(0, 12)).toEqual([
+      0, 0, 0, 0,
+      1, 1, 1, 1,
+      2, 2, 2, 2,
+    ])
+    expect(rounds[0]?.[13]).toBe(2)
+    expect(rounds[1]?.[13]).toBe(1)
   })
 
   it('accepts a bad initialization that avoids the obvious clustering', () => {

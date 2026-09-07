@@ -125,7 +125,7 @@ function validateMetricComparison(datasetId: keyof typeof kmeansInteractiveDatas
 export const kmeansAssignment: AssignmentSpec = {
   id: 'kmeans',
   displayNumber: 2,
-  version: 6,
+  version: 7,
   title: 'K-means Clustering',
   topic: 'Clustering',
   description:

@@ -51,7 +51,9 @@ The runner first looks for that app-generated filename. It also accepts `submiss
 
 ## Versions and updates
 
-Every exported submission contains an assignment ID and version. Every autograder ZIP is locked to the corresponding version. A submission for a different assignment or an older/newer version receives zero rather than being interpreted against a different answer key.
+Every exported submission contains an assignment ID and version. Every autograder ZIP contains the current answer key and any explicitly supported historical keys. Unsupported versions are rejected rather than interpreted against a different answer key.
+
+The K-means package accepts both version 6 (the original initialization) and version 7 (the easier initialization), using the appropriate Lloyd sequence for each. Upload the rebuilt `gradescope/dist/kmeans.zip` and regrade existing submissions after updating the grader. Students do not need to redo version-6 work or change the version in their JSON. Pushing the app to GitHub does not update the package already installed on Gradescope.
 
 Whenever a published assignment's version changes, run `npm run gradescope:build` again and upload the newly generated ZIP to that Gradescope assignment. Existing ZIP filenames stay stable, so the new upload replaces the old autograder. Do the same after changing validation logic even if the visible questions did not change.
 

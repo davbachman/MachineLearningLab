@@ -20,6 +20,7 @@ import {
 import { DEFAULT_HINT_SCHEDULE } from '../../lib/assignmentState'
 import {
   classifyKnnPoint,
+  classifyGridCells,
   computeAccuracy,
   findBestK,
   type PlotBounds,
@@ -143,6 +144,9 @@ export function Knn2DQuestion({
   const [stepIndex, setStepIndex] = useState(0)
   const [selectedLabel, setSelectedLabel] = useState<number | null>(null)
   const [brushLabel, setBrushLabel] = useState(0)
+  const [inspectedCellIndex, setInspectedCellIndex] = useState<number | null>(null)
+  const [inspectOnly, setInspectOnly] = useState(false)
+  const [incorrectCells, setIncorrectCells] = useState<number[]>([])
   const [paintedCells, setPaintedCells] = useState<(number | null)[]>(() =>
     dataset.kind === 'decisionBoundary'
       ? blankDecisionGrid(dataset.gridColumns, dataset.gridRows)
@@ -295,6 +299,9 @@ export function Knn2DQuestion({
       )
       guideItems = [
         'Choose a class brush, then click cells to paint them.',
+        'Hover over a cell or focus it with Tab to highlight its nearest neighbors. Predict the class at the marked cell center by counting their votes.',
+        'On a touchscreen, enable Inspect neighbors to tap a cell without painting it. Turn it off to paint.',
+        'Dashed outlines mark cells that needed correction at your last check. Editing a cell clears its outline; check again to verify.',
         'At k = 1, isolated points can create tiny islands.',
         'At larger k, the cells average over a wider neighborhood.',
       ]
@@ -711,8 +718,15 @@ export function Knn2DQuestion({
       case 'decisionBoundary': {
         const currentDataset = dataset as KnnDecisionBoundaryDataset
         const currentStep = Math.min(stepIndex, currentDataset.kSequence.length - 1)
+        const targetCells = classifyGridCells(
+          currentDataset.trainingPoints, currentDataset.bounds,
+          currentDataset.gridColumns, currentDataset.gridRows,
+          currentDataset.kSequence[currentStep], currentDataset.metric,
+        )
+        const errors = targetCells.flatMap((label, index) => paintedCells[index] === label ? [] : [index])
+        setIncorrectCells(errors)
         if (paintedCells.some((cell) => cell === null)) {
-          invalidAttempt('Paint every grid cell before checking the boundary.')
+          invalidAttempt('Paint every grid cell. Dashed outlines mark unpainted or incorrect cells.')
           return
         }
 
@@ -723,14 +737,14 @@ export function Knn2DQuestion({
         const result = question.validator(submission)
 
         if (!result.correct) {
-          invalidAttempt(result.message ?? 'At least one grid cell is still wrong.')
+          invalidAttempt(`${errors.length} cell${errors.length === 1 ? '' : 's'} need correction. Inspect the neighbors of the outlined cells and count their votes.`)
           return
         }
 
         if (currentStep < currentDataset.kSequence.length - 1) {
-          setFeedback(`The k = ${currentDataset.kSequence[currentStep]} boundary is correct. Now repaint the grid for k = ${currentDataset.kSequence[currentStep + 1]}.`)
+          setFeedback(`The k = ${currentDataset.kSequence[currentStep]} boundary is correct. Your coloring is kept: change only the cells whose predictions differ for k = ${currentDataset.kSequence[currentStep + 1]}.`)
           setStepIndex((current) => current + 1)
-          setPaintedCells(blankDecisionGrid(currentDataset.gridColumns, currentDataset.gridRows))
+          setInspectedCellIndex(null)
           onAttempt('progress', submission)
           return
         }
@@ -838,6 +852,17 @@ export function Knn2DQuestion({
   }
 
   const zeroYVisible = stageBounds.minY <= 0 && stageBounds.maxY >= 0
+  const inspectedCell = showDecisionGrid && inspectedCellIndex !== null ? gridTemplate[inspectedCellIndex] : undefined
+  const inspectedNeighbors = inspectedCell
+    ? classifyKnnPoint(stageTrainingPoints, inspectedCell.center, currentK, currentMetric).neighbors
+    : []
+
+  const activateCell = (index: number) => {
+    setInspectedCellIndex(index)
+    if (inspectOnly) return
+    setPaintedCells((current) => current.map((value, cellIndex) => cellIndex === index ? brushLabel : value))
+    setIncorrectCells((current) => current.filter((cellIndex) => cellIndex !== index))
+  }
   const zeroXVisible = stageBounds.minX <= 0 && stageBounds.maxX >= 0
   const xAxisY = zeroYVisible ? toStageY(0) : STAGE_SIZE - stageMargins.bottom
   const yAxisX = zeroXVisible ? toStageX(0) : stageMargins.left
@@ -915,6 +940,16 @@ export function Knn2DQuestion({
           {showDecisionGrid ? (
             <div className="knn-toolbar">
               <p className="panel-note">Choose a paint brush, then color each cell in the grid.</p>
+              <label>
+                <input type="checkbox" checked={inspectOnly} onChange={(event) => setInspectOnly(event.target.checked)} />
+                {' '}Inspect neighbors (tap without painting)
+              </label>
+              <p className="panel-note" aria-live="polite">
+                {inspectedCell
+                  ? `Row ${inspectedCell.row + 1}, column ${inspectedCell.column + 1}: the ${currentK} nearest ${currentK === 1 ? 'point is' : 'points are'} ringed. Count the class votes at the marked center.`
+                  : 'Hover over a cell, focus it with Tab, or enable Inspect neighbors and tap it to see its nearest neighbors.'}
+              </p>
+              {incorrectCells.length > 0 ? <p className="panel-note">{incorrectCells.length} cells from your last check are outlined for correction.</p> : null}
               <div className="class-picker" role="radiogroup" aria-label="Choose a class brush">
                 {dataset.classes.map((classSpec, classIndex) => (
                   <button
@@ -991,21 +1026,19 @@ export function Knn2DQuestion({
                       stroke="rgba(72, 86, 93, 0.36)"
                       strokeWidth="1"
                       role="button"
-                      aria-label={`Cell row ${cell.row + 1} column ${cell.column + 1}`}
+                      aria-label={`Cell row ${cell.row + 1} column ${cell.column + 1}${incorrectCells.includes(cell.index) ? ', needs correction' : ''}`}
                       tabIndex={0}
                       className="interactive-cell"
+                      onPointerEnter={() => setInspectedCellIndex(cell.index)}
+                      onFocus={() => setInspectedCellIndex(cell.index)}
                       onClick={(event) => {
                         event.stopPropagation()
-                        setPaintedCells((current) =>
-                          current.map((value, index) => (index === cell.index ? brushLabel : value)),
-                        )
+                        activateCell(cell.index)
                       }}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault()
-                          setPaintedCells((current) =>
-                            current.map((value, index) => (index === cell.index ? brushLabel : value)),
-                          )
+                          activateCell(cell.index)
                         }
                       }}
                     />
@@ -1021,6 +1054,7 @@ export function Knn2DQuestion({
                 y2={xAxisY}
                 stroke="#d7d0c3"
                 strokeWidth="1.2"
+                pointerEvents="none"
               />
             ) : null}
             {zeroXVisible ? (
@@ -1031,6 +1065,7 @@ export function Knn2DQuestion({
                 y2={STAGE_SIZE - stageMargins.bottom}
                 stroke="#d7d0c3"
                 strokeWidth="1.2"
+                pointerEvents="none"
               />
             ) : null}
 
@@ -1122,7 +1157,7 @@ export function Knn2DQuestion({
                 point.label === addedPoint.label
 
               return (
-                <g key={`${question.id}-train-${index}`}>
+                <g key={`${question.id}-train-${index}`} pointerEvents={showDecisionGrid ? 'none' : undefined}>
                   {isAddedPoint ? (
                     <circle
                       cx={toStageX(point.point[0])}
@@ -1189,6 +1224,39 @@ export function Knn2DQuestion({
                 >
                   Q
                 </text>
+              </g>
+            ) : null}
+            {showDecisionGrid ? (
+              <g pointerEvents="none">
+                {gridTemplate.filter((cell) => incorrectCells.includes(cell.index)).map((cell) => (
+                  <rect key={`correction-${cell.index}`}
+                    x={toStageX(cell.x0) + 3} y={toStageY(cell.y1) + 3}
+                    width={toStageX(cell.x1) - toStageX(cell.x0) - 6}
+                    height={toStageY(cell.y0) - toStageY(cell.y1) - 6}
+                    fill="none" stroke="#77326b" strokeWidth="2.5" strokeDasharray="5 3" />
+                ))}
+                {inspectedCell ? (
+                  <g role="img" aria-label={`${currentK} nearest neighbors for row ${inspectedCell.row + 1} column ${inspectedCell.column + 1}`}>
+                    <rect x={toStageX(inspectedCell.x0) + 1} y={toStageY(inspectedCell.y1) + 1}
+                      width={toStageX(inspectedCell.x1) - toStageX(inspectedCell.x0) - 2}
+                      height={toStageY(inspectedCell.y0) - toStageY(inspectedCell.y1) - 2}
+                      fill="none" stroke={QUERY_FILL} strokeWidth="2" />
+                    {inspectedNeighbors.map((neighbor) => (
+                      <g key={neighbor.index}>
+                        <line x1={toStageX(inspectedCell.center[0])} y1={toStageY(inspectedCell.center[1])}
+                          x2={toStageX(neighbor.point[0])} y2={toStageY(neighbor.point[1])}
+                          stroke={QUERY_FILL} strokeDasharray="3 3" opacity="0.5" />
+                        <circle data-neighbor-index={neighbor.index}
+                          cx={toStageX(neighbor.point[0])} cy={toStageY(neighbor.point[1])}
+                          r="12" fill="none" stroke={QUERY_FILL} strokeWidth="2.5" />
+                      </g>
+                    ))}
+                    <path d={`M ${toStageX(inspectedCell.center[0]) - 5} ${toStageY(inspectedCell.center[1])} h 10 M ${toStageX(inspectedCell.center[0])} ${toStageY(inspectedCell.center[1]) - 5} v 10`}
+                      stroke="white" strokeWidth="5" />
+                    <path d={`M ${toStageX(inspectedCell.center[0]) - 5} ${toStageY(inspectedCell.center[1])} h 10 M ${toStageX(inspectedCell.center[0])} ${toStageY(inspectedCell.center[1]) - 5} v 10`}
+                      stroke={QUERY_FILL} strokeWidth="2" />
+                  </g>
+                ) : null}
               </g>
             ) : null}
           </svg>

@@ -10,7 +10,7 @@ import {
 import { validateMultipleChoiceSelections } from '../lib/questionValidation'
 import { kmeansNotebookLab } from './kmeansNotebookLab'
 
-function validateLloydIteration(
+export function validateLloydIteration(
   datasetId: keyof typeof kmeansInteractiveDatasets,
   tolerance: number,
 ) {

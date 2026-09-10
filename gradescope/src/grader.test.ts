@@ -3,6 +3,7 @@ import { publishedAssignments } from '../../src/data/assignments'
 import type { JsonValue, SubmissionExport } from '../../src/types'
 import { gradeSubmission } from './grader'
 import { createReferenceSubmission } from './referenceSubmissions'
+import { kmeansVersion6Assignment } from './assignmentVersions'
 
 function cloneSubmission(submission: SubmissionExport): SubmissionExport {
   return JSON.parse(JSON.stringify(submission)) as SubmissionExport
@@ -16,6 +17,47 @@ function configFor(assignment: (typeof publishedAssignments)[number]) {
 }
 
 describe('Gradescope grader', () => {
+  it('grades both K-means versions with their own phase counts and answer keys', () => {
+    const current = publishedAssignments.find((assignment) => assignment.id === 'kmeans')!
+    const oldSubmission = createReferenceSubmission(kmeansVersion6Assignment)
+    const currentSubmission = createReferenceSubmission(current)
+
+    expect(oldSubmission.questions[0].attemptHistory).toHaveLength(8)
+    expect(currentSubmission.questions[0].attemptHistory).toHaveLength(6)
+    expect(oldSubmission.questions[0].attemptHistory[0].answer).toMatchObject({
+      referenceCentroids: [[-6, -1], [0, 4], [6, 0]],
+    })
+    for (const submission of [oldSubmission, currentSubmission]) {
+      const result = gradeSubmission(configFor(current), submission)
+      expect(result.score).toBe(100)
+      expect(result.output).toContain(`version ${submission.assignmentVersion}`)
+      expect(result.tests.every((test) => test.status === 'passed')).toBe(true)
+
+      const incomplete = cloneSubmission(submission)
+      incomplete.questions[0].attemptHistory = []
+      incomplete.questions[0].latestAnswer = null
+      expect(gradeSubmission(configFor(current), incomplete).score).toBeCloseTo(80)
+    }
+
+    // Changing a version tag must not make a different initialization correct.
+    oldSubmission.assignmentVersion = 7
+    currentSubmission.assignmentVersion = 6
+    expect(gradeSubmission(configFor(current), oldSubmission).score).toBeLessThan(100)
+    expect(gradeSubmission(configFor(current), currentSubmission).score).toBeLessThan(100)
+  })
+
+  it('rejects unsupported versions with an instructor-directed message', () => {
+    const current = publishedAssignments.find((assignment) => assignment.id === 'kmeans')!
+    const submission = createReferenceSubmission(current)
+    for (const version of [5, 8]) {
+      submission.assignmentVersion = version
+      const result = gradeSubmission(configFor(current), submission)
+      expect(result.score).toBe(0)
+      expect(result.tests[0].name).toBe('Submission validation')
+      expect(result.output).toContain('Contact your instructor')
+    }
+  })
+
   it('awards exactly 100 points to a canonical export for every published assignment', () => {
     expect(publishedAssignments).toHaveLength(12)
 

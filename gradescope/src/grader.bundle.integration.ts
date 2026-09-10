@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest'
 import { publishedAssignments } from '../../src/data/assignments'
 import type { GradescopeResults } from './grader'
 import { createReferenceSubmission } from './referenceSubmissions'
+import { kmeansVersion6Assignment } from './assignmentVersions'
 
 interface BundledGrader {
   gradeSubmission: (config: unknown, submission: unknown) => GradescopeResults
@@ -17,11 +18,11 @@ const repositoryRoot = resolve(import.meta.dirname, '../..')
 
 describe('bundled Gradescope grader', () => {
   it('awards exactly 100 points to every canonical assignment export', () => {
-    for (const assignment of publishedAssignments) {
+    for (const assignment of [...publishedAssignments, kmeansVersion6Assignment]) {
       const results = bundledGrader.gradeSubmission(
         {
           assignmentId: assignment.id,
-          assignmentVersion: assignment.version,
+          assignmentVersion: publishedAssignments.find((current) => current.id === assignment.id)!.version,
         },
         createReferenceSubmission(assignment),
       )
@@ -32,7 +33,7 @@ describe('bundled Gradescope grader', () => {
   })
 
   it('grades a valid export through every extracted package runner', () => {
-    for (const assignment of publishedAssignments) {
+    for (const assignment of [...publishedAssignments, kmeansVersion6Assignment]) {
       const temporaryRoot = mkdtempSync(join(tmpdir(), `gradescope-${assignment.id}-`))
       try {
         const sourceDirectory = join(temporaryRoot, 'source')

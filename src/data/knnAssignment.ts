@@ -249,7 +249,7 @@ export const knnAssignment: AssignmentSpec = {
       prompt:
         'Color each grid cell with the class that k-NN would predict there, first for k = 1 and then for k = 5.',
       instructions:
-        'Use the class brush buttons below the plot. The points stay fixed while the boundary changes between the two rounds.',
+        'Predict the class at each cell’s center. Hover over or focus a cell to highlight its nearest neighbors, then count their votes and paint the cell. On a touchscreen, enable Inspect neighbors to examine a cell before painting. Your k = 1 coloring carries forward to k = 5; update the cells whose predictions change. After checking, dashed outlines mark cells that need correction.',
       datasetId: 'decisionBoundary',
       interactionMode: 'decisionBoundary',
       hintSchedule: [2, 4],

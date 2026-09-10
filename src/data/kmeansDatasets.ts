@@ -105,7 +105,25 @@ function buildLloydSequence(points: Vec2[], initialCentroids: Vec2[], k: number)
   }
 }
 
-const multiIterationSequence = buildLloydSequence(multiIterationPoints, multiIterationInitialCentroids, 3)
+function fullIterationDataset(id: string, initialCentroids: Vec2[]): KmeansInteractiveDataset {
+  const sequence = buildLloydSequence(multiIterationPoints, initialCentroids, 3)
+  return {
+    id,
+    label: "Run Lloyd's algorithm until it converges",
+    points: multiIterationPoints,
+    k: 3,
+    metric: 'euclidean',
+    initialCentroids,
+    iterationAssignments: sequence.iterationAssignments,
+    iterationCentroids: sequence.iterationCentroids,
+    targetAssignments: sequence.iterationAssignments[sequence.iterationAssignments.length - 1],
+    targetCentroids: sequence.iterationCentroids[sequence.iterationCentroids.length - 1],
+    objectiveSequence: sequence.objectiveSequence,
+    objectiveBefore: sequence.objectiveSequence[0],
+    objectiveAfter: sequence.objectiveSequence[sequence.objectiveSequence.length - 1],
+    regionVisibility: 'resolved',
+  }
+}
 
 const badInitializationPoints: Vec2[] = [
   [-8, 0],
@@ -140,25 +158,9 @@ const metricComparisonPoints: Vec2[] = [
 ]
 
 export const kmeansInteractiveDatasets: Record<string, KmeansInteractiveDataset> = {
-  fullIteration: {
-    id: 'fullIteration',
-    label: "Run Lloyd's algorithm until it converges",
-    points: multiIterationPoints,
-    k: 3,
-    metric: 'euclidean',
-    initialCentroids: multiIterationInitialCentroids,
-    iterationAssignments: multiIterationSequence.iterationAssignments,
-    iterationCentroids: multiIterationSequence.iterationCentroids,
-    targetAssignments:
-      multiIterationSequence.iterationAssignments[multiIterationSequence.iterationAssignments.length - 1],
-    targetCentroids:
-      multiIterationSequence.iterationCentroids[multiIterationSequence.iterationCentroids.length - 1],
-    objectiveSequence: multiIterationSequence.objectiveSequence,
-    objectiveBefore: multiIterationSequence.objectiveSequence[0],
-    objectiveAfter:
-      multiIterationSequence.objectiveSequence[multiIterationSequence.objectiveSequence.length - 1],
-    regionVisibility: 'resolved',
-  },
+  fullIteration: fullIterationDataset('fullIteration', multiIterationInitialCentroids),
+  // Retained only for grading exports created before the version-7 initialization change.
+  fullIterationV6: fullIterationDataset('fullIterationV6', [[-6, -1], [0, 4], [6, 0]]),
   badInitialization: {
     id: 'badInitialization',
     label: 'Pick a bad initialization for k = 3',

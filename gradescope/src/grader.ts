@@ -17,6 +17,7 @@ import type {
   SubmissionQuestionExport,
 } from '../../src/types'
 import type { CodeLabQuestionSpec, CodeLabSubmission } from '../../src/lib/codeLab'
+import { assignmentForSubmissionVersion } from './assignmentVersions'
 
 const SUBMISSION_FORMAT_VERSION = 2
 const CODE_LAB_FORMAT_VERSION = 1
@@ -173,7 +174,7 @@ function validateSubmissionEnvelope(
   }
   if (raw.assignmentVersion !== assignment.version) {
     return {
-      error: `Assignment version ${assignment.version} is required; export a fresh submission from the current app.`,
+      error: `This autograder does not support the submitted assignment version (${String(raw.assignmentVersion)}). Its current version is ${assignment.version}. Contact your instructor to check the autograder package before redoing or re-exporting your work.`,
     }
   }
   if (!Array.isArray(raw.questions)) {
@@ -482,19 +483,23 @@ export function gradeSubmission(configInput: unknown, submissionInput: unknown):
     const config = normalizeConfig(configInput)
     if (!config) return invalidResults('The autograder assignment configuration is invalid.')
 
-    const assignment = assignmentsById[config.assignmentId]
-    if (!assignment || !assignment.published) {
+    const currentAssignment = assignmentsById[config.assignmentId]
+    if (!currentAssignment || !currentAssignment.published) {
       return invalidResults(`Unknown or unpublished assignment: ${config.assignmentId}.`)
     }
     if (
       config.assignmentVersion !== undefined &&
-      config.assignmentVersion !== assignment.version
+      config.assignmentVersion !== currentAssignment.version
     ) {
       return invalidResults(
-        `This autograder was configured for assignment version ${config.assignmentVersion}, but the bundled assignment is version ${assignment.version}.`,
+        `This autograder was configured for assignment version ${config.assignmentVersion}, but the bundled assignment is version ${currentAssignment.version}.`,
       )
     }
 
+    const assignment = assignmentForSubmissionVersion(
+      currentAssignment,
+      isRecord(submissionInput) ? submissionInput.assignmentVersion : undefined,
+    )
     const validated = validateSubmissionEnvelope(submissionInput, assignment)
     if ('error' in validated) return invalidResults(validated.error)
 

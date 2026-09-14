@@ -213,15 +213,8 @@ export function CodeLabQuestion({
       questionNumber={questionNumber}
       totalQuestions={totalQuestions}
       state={state}
-      feedback={feedback}
       hints={hints}
-      controls={
-        <>
-          <button type="button" className="button" onClick={submitCurrentStage}>
-            {actionLabel(currentStage.kind)}
-          </button>
-        </>
-      }
+      controls={null}
     >
       <div className="code-lab-workspace">
         <CodePanel question={question} />
@@ -319,6 +312,12 @@ export function CodeLabQuestion({
               </div>
 
               {isPast ? <p className="code-lab-stage-success">{stage.successCopy}</p> : null}
+              {isCurrent ? <>
+                <button type="button" className="button" onClick={submitCurrentStage}>
+                  {actionLabel(currentStage.kind)}
+                </button>
+                {feedback ? <p className="feedback" role="status">{feedback}</p> : null}
+              </> : null}
             </li>
           )
         })}

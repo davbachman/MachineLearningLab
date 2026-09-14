@@ -18,6 +18,8 @@ export type QuestionKind =
   | 'decisionTree'
   | 'randomForest'
   | 'codeLab'
+  | 'linearFit'
+  | 'planeFit'
 export type QuestionStatus = 'locked' | 'active' | 'correct' | 'gave_up'
 export type AttemptOutcome = 'incorrect' | 'progress' | 'correct'
 
@@ -142,7 +144,22 @@ export interface TableEntryQuestionSpec extends BaseQuestionSpec<'tableEntry'> {
   substeps: string[]
 }
 
+export interface LinearFitQuestionSpec extends BaseQuestionSpec<'linearFit'> {
+  points: Vec2[]
+  initialSlope: number
+  initialIntercept: number
+  rssToleranceRatio: number
+}
+
+export interface PlaneFitQuestionSpec extends BaseQuestionSpec<'planeFit'> {
+  points: Vec3[]
+  initialCoefficients: { slope1: number; slope2: number; intercept: number }
+  rssToleranceRatio: number
+}
+
 export type QuestionSpec =
+  | PlaneFitQuestionSpec
+  | LinearFitQuestionSpec
   | Pca2DLineQuestionSpec
   | Pca3DPlaneQuestionSpec
   | MultipleChoiceQuestionSpec

@@ -95,9 +95,9 @@ export const linearRegressionNotebookLab: CodeLabQuestionSpec = defineCodeLabQue
   prompt:
     'Use the completed `5LinearRegression.ipynb` notebook to trace its normal-equation implementation, then diagnose a prediction method that drops the fitted intercept.',
   instructions:
-    'The displayed class is the notebook implementation with statement labels added. Run the fixture and invocation conceptually from top to bottom. Treat values shown as integers as their floating-point equivalents.',
-  datasetId: 'linear-regression-notebook-v1',
-  variantId: 'linear-regression-notebook-v1',
+    'The displayed class is the notebook implementation with statement labels added. Work through one calculation at a time and check each answer before continuing. Array answers are displayed as lists; fractions represent exact values. Ignore floating-point roundoff.',
+  datasetId: 'linear-regression-notebook-v3',
+  variantId: 'linear-regression-notebook-v3',
   language: 'python',
   code: linearRegressionCode,
   fixtureTitle: 'Deterministic line with a nonzero intercept',
@@ -128,11 +128,87 @@ predictions = model.predict(
     {
       id: 'TRACE',
       kind: 'executionTrace',
-      title: '1. Trace the normal-equation fit',
+      title: '1. Compute Xnew.T @ Xnew',
       prompt:
-        'Mentally execute the notebook class on the trace data. What parameter values and predictions are produced?',
+        'During model.fit(X_trace, y_trace), X and y refer to X_trace and y_trace. Trace S1 and S2 to construct the local variable Xnew, then evaluate Xnew.T @ Xnew, the first matrix expression in S3.',
       successCopy:
-        'Correct: the normal equation recovers the exact line `y = 2x + 1`, so the two new predictions are 7 and 9.',
+        'Correct: Xnew has rows [1, 0], [1, 1], and [1, 2]. Taking dot products of its columns gives [[3, 3], [3, 5]].',
+      fields: [
+        {
+          id: 'GRAM',
+          label: '(Xnew.T @ Xnew).tolist()',
+          correctOptionId: 'GRAM_3_3_3_5',
+          options: [
+            { id: 'GRAM_3_3_3_5', label: '[[3.0, 3.0], [3.0, 5.0]]' },
+            { id: 'GRAM_REVERSED', label: '[[1.0, 1.0, 1.0], [1.0, 2.0, 3.0], [1.0, 3.0, 5.0]]' },
+            { id: 'GRAM_NO_CROSS', label: '[[3.0, 0.0], [0.0, 5.0]]' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'INVERSE',
+      kind: 'executionTrace',
+      title: '2. Invert Xnew.T @ Xnew',
+      prompt: 'Now evaluate the matrix inverse used in S3. This is a matrix inverse, not the elementwise reciprocal.',
+      successCopy: 'Correct: the determinant is 3·5 − 3·3 = 6. The inverse is (1/6) times [[5, -3], [-3, 3]].',
+      fields: [
+        {
+          id: 'GRAM_INVERSE',
+          label: 'np.linalg.inv(Xnew.T @ Xnew).tolist()',
+          correctOptionId: 'INVERSE_5_6',
+          options: [
+            { id: 'INVERSE_5_6', label: '[[5/6, -1/2], [-1/2, 1/2]]' },
+            { id: 'INVERSE_RECIPROCALS', label: '[[1/3, 1/3], [1/3, 1/5]]' },
+            { id: 'INVERSE_NO_DETERMINANT', label: '[[5.0, -3.0], [-3.0, 3.0]]' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'TARGET_PRODUCT',
+      kind: 'executionTrace',
+      title: '3. Compute Xnew.T @ y',
+      prompt: 'Evaluate the other matrix product in S3 using y = y_trace. Pay attention to the shape of y.',
+      successCopy: 'Correct: the entries are 1 + 3 + 5 = 9 and 0·1 + 1·3 + 2·5 = 13. Since y is one-dimensional, the result is also one-dimensional.',
+      fields: [
+        {
+          id: 'XT_Y',
+          label: '(Xnew.T @ y).tolist()',
+          correctOptionId: 'XT_Y_9_13',
+          options: [
+            { id: 'XT_Y_9_13', label: '[9.0, 13.0]' },
+            { id: 'XT_Y_REVERSED', label: '[13.0, 9.0]' },
+            { id: 'XT_Y_COLUMN', label: '[[9.0], [13.0]]' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'COEFFICIENTS',
+      kind: 'executionTrace',
+      title: '4. Compute coeffs',
+      prompt: 'Combine the inverse and the target product to evaluate the full expression in S3. What is the local variable coeffs immediately after S3?',
+      successCopy: 'Correct: multiplying [[5/6, -1/2], [-1/2, 1/2]] by [9, 13] gives [1, 2]. The first entry multiplies the column of ones.',
+      fields: [
+        {
+          id: 'COEFFS',
+          label: 'coeffs.tolist() after S3',
+          correctOptionId: 'COEFFS_1_2',
+          options: [
+            { id: 'COEFFS_1_2', label: '[1.0, 2.0]' },
+            { id: 'COEFFS_REVERSED', label: '[2.0, 1.0]' },
+            { id: 'COEFFS_NO_INVERSE', label: '[9.0, 13.0]' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'SLOPE',
+      kind: 'executionTrace',
+      title: '5. Read the stored slope',
+      prompt: 'Trace S5, then the invocation coef = model.coef.tolist(). What is coef? Notice the slice coeffs[1:].',
+      successCopy: 'Correct: coeffs[1:] is the one-element array containing the slope 2, so coef is [2.0], not a scalar.',
       fields: [
         {
           id: 'COEF',
@@ -144,6 +220,15 @@ predictions = model.predict(
             { id: 'COEF_2_1', label: '[2.0, 1.0]' },
           ],
         },
+      ],
+    },
+    {
+      id: 'INTERCEPT',
+      kind: 'executionTrace',
+      title: '6. Read the stored intercept',
+      prompt: 'Trace S4, then the invocation intercept = model.intercept. What is intercept?',
+      successCopy: 'Correct: coeffs[0] is the scalar 1.0, the coefficient of the column of ones in Xnew.',
+      fields: [
         {
           id: 'INTERCEPT',
           label: 'intercept',
@@ -154,6 +239,15 @@ predictions = model.predict(
             { id: 'INTERCEPT_2', label: '2.0' },
           ],
         },
+      ],
+    },
+    {
+      id: 'PREDICT',
+      kind: 'executionTrace',
+      title: '7. Predict at two new inputs',
+      prompt: 'Use the fitted parameters to trace S6 for the invocation model.predict(np.array([[3.0], [4.0]])). What is predictions after .tolist()?',
+      successCopy: 'Correct: 3·2 + 1 = 7 and 4·2 + 1 = 9. The returned array is one-dimensional, so predictions is [7.0, 9.0].',
+      fields: [
         {
           id: 'PREDICTIONS',
           label: 'predictions',
@@ -169,7 +263,7 @@ predictions = model.predict(
     {
       id: 'MUTATION',
       kind: 'diagnoseMutation',
-      title: '2. Read a changed prediction method',
+      title: '8. Read a changed prediction method',
       prompt:
         'Suppose S6 were changed to `return x@self.coef`, leaving the fitted parameters unchanged. What would `predictions` become?',
       successCopy:
@@ -190,7 +284,7 @@ predictions = model.predict(
     {
       id: 'TEST',
       kind: 'distinguishingTest',
-      title: '3. Choose a distinguishing test',
+      title: '9. Choose a distinguishing test',
       prompt:
         'Which assertion passes for the notebook implementation but fails when S6 omits the intercept?',
       successCopy:

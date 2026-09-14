@@ -18,6 +18,7 @@ import { Kmeans2DQuestion } from './questions/Kmeans2DQuestion'
 import { Knn2DQuestion } from './questions/Knn2DQuestion'
 import { MultipleChoiceQuestion } from './questions/MultipleChoiceQuestion'
 import { Pca2DQuestion } from './questions/Pca2DQuestion'
+import { LinearFitQuestion } from './questions/LinearFitQuestion'
 import { TableEntryQuestion } from './questions/TableEntryQuestion'
 import { CodeLabQuestion } from './questions/CodeLabQuestion'
 import type { CodeLabSubmission } from '../lib/codeLab'
@@ -26,6 +27,11 @@ import { RandomForestQuestion } from './questions/RandomForestQuestion'
 const Pca3DQuestion = lazy(async () => {
   const module = await import('./questions/Pca3DQuestion')
   return { default: module.Pca3DQuestion }
+})
+
+const PlaneFitQuestion = lazy(async () => {
+  const module = await import('./questions/PlaneFitQuestion')
+  return { default: module.PlaneFitQuestion }
 })
 
 interface AssignmentPageProps {
@@ -160,6 +166,18 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
           </aside>
 
           <section className="question-strip">
+            {currentQuestion.kind === 'planeFit' ? (
+              <Suspense fallback={<p>Loading the 3D regression scene…</p>}>
+                <PlaneFitQuestion key={currentQuestion.id} question={currentQuestion} state={currentQuestionState}
+                  questionNumber={activeViewIndex + 1} totalQuestions={assignment.questions.length}
+                  hints={hints} onAttempt={handleAttempt} />
+              </Suspense>
+            ) : null}
+            {currentQuestion.kind === 'linearFit' ? (
+              <LinearFitQuestion key={currentQuestion.id} question={currentQuestion} state={currentQuestionState}
+                questionNumber={activeViewIndex + 1} totalQuestions={assignment.questions.length}
+                hints={hints} onAttempt={handleAttempt} />
+            ) : null}
             {currentQuestion.kind === 'pca2dLine' ? (
               <Pca2DQuestion
                 key={currentQuestion.id}

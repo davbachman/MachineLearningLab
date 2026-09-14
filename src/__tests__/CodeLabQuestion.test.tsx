@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CodeLabQuestion } from '../components/questions/CodeLabQuestion'
 import { pcaCodeLab } from '../data/codeLabQuestions'
+import { linearRegressionNotebookLab } from '../data/regressionCodeLabQuestions'
 import type { QuestionState } from '../types'
 
 const activeState: QuestionState = {
@@ -25,6 +26,38 @@ function correctOptionInput(stageIndex: number, fieldIndex: number) {
 }
 
 describe('CodeLabQuestion', () => {
+  it('checks each regression calculation separately, records progress, and restores the next checkpoint', async () => {
+    const user = userEvent.setup()
+    const onAttempt = vi.fn()
+    const lab = linearRegressionNotebookLab
+    const props = { question: lab, state: activeState, questionNumber: 3, totalQuestions: 3, hints: [], onAttempt }
+    const view = render(<CodeLabQuestion {...props} />)
+    const firstField = lab.stages[0].fields[0]
+    const firstStage = document.querySelector('li[aria-current="step"]')!
+    expect(firstStage.querySelectorAll('fieldset')).toHaveLength(1)
+    const wrong = firstField.options.find((option) => option.id !== firstField.correctOptionId)!
+    await user.click(firstStage.querySelector<HTMLInputElement>(`input[value="${wrong.id}"]`)!)
+    await user.click(within(firstStage as HTMLElement).getByRole('button'))
+    expect(onAttempt.mock.lastCall?.[0]).toBe('incorrect')
+    expect(firstStage).toHaveAttribute('aria-current', 'step')
+    await user.click(firstStage.querySelector<HTMLInputElement>(`input[value="${firstField.correctOptionId}"]`)!)
+    await user.click(within(firstStage as HTMLElement).getByRole('button'))
+    expect(onAttempt.mock.lastCall?.[0]).toBe('progress')
+    const saved = onAttempt.mock.lastCall?.[1]
+    expect(saved.stages.TRACE.GRAM).toBe(firstField.correctOptionId)
+    expect(saved.stages.INVERSE).toEqual({})
+    view.unmount()
+    render(<CodeLabQuestion {...props} initialSubmission={saved} />)
+    expect(document.querySelector('li[aria-current="step"]')).toHaveTextContent('2. Invert Xnew.T @ Xnew')
+    for (const stage of lab.stages.slice(1)) {
+      const current = document.querySelector('li[aria-current="step"]')! as HTMLElement
+      expect(current).toHaveTextContent(stage.title)
+      await user.click(current.querySelector<HTMLInputElement>(`input[value="${stage.fields[0].correctOptionId}"]`)!)
+      await user.click(within(current).getByRole('button'))
+    }
+    expect(onAttempt.mock.lastCall?.[0]).toBe('correct')
+    expect(lab.validator(onAttempt.mock.lastCall?.[1]).correct).toBe(true)
+  })
   it('shows the exact Python command that connects the fixture to the trace questions', () => {
     render(
       <CodeLabQuestion

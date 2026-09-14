@@ -57,6 +57,10 @@ The K-means package accepts both version 6 (the original initialization) and ver
 
 Whenever a published assignment's version changes, run `npm run gradescope:build` again and upload the newly generated ZIP to that Gradescope assignment. Existing ZIP filenames stay stable, so the new upload replaces the old autograder. Do the same after changing validation logic even if the visible questions did not change.
 
+The rebuilt Linear Regression assignment (version 2) contains three questions: interactive RSS line fitting, interactive 3D plane fitting, and the expanded notebook lab. Upload the rebuilt `gradescope/dist/linear-regression.zip` when publishing it. Both fitting graders recompute RSS from the submitted coefficients and accept values within 5% of the least-squares minimum; they do not trust a submitted RSS readout. Plane residuals are response-axis errors at fixed feature values, not perpendicular distances. No earlier Linear Regression versions are supported because students had not started the assignment when it was rebuilt.
+
+The Linear Regression notebook lab uses variant `linear-regression-notebook-v3`, with nine single-answer checkpoints. Each calculation can be checked and recorded separately; the grader awards partial credit per answer, including for an unfinished lab.
+
 ## Local runner paths
 
 On Gradescope, the runner uses the official paths:

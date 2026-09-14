@@ -4,6 +4,8 @@ import type {
   MultipleChoiceQuestionSpec,
 } from '../types'
 import { validateMultipleChoiceSelections } from '../lib/questionValidation'
+import { linearFitQuestion } from './linearFitQuestion'
+import { planeFitQuestion } from './planeFitQuestion'
 import {
   gradientDescentNotebookLab,
   linearRegressionNotebookLab,
@@ -61,114 +63,6 @@ function notebookQuestion(input: {
   }
 }
 
-const linearRegressionQuestions: MultipleChoiceQuestionSpec[] = [
-  notebookQuestion({
-    id: 'linear-regression-endpoints',
-    title: 'Read the Endpoint Model',
-    prompt:
-      'Trace how `MaxMinLinearRegression.fit` chooses two observations and turns them into a line.',
-    instructions:
-      'The indices are selected from X first; the corresponding y values are then read at those same indices.',
-    datasetId: 'linearRegressionNotebook',
-    parts: [
-      part('selected-rows', 'Which two rows define this model?', 'x-extremes', [
-        ['x-extremes', 'The rows with minimum and maximum X', '`np.argmin(X)` and `np.argmax(X)` select the endpoint rows.'],
-        ['y-extremes', 'The rows with minimum and maximum y', 'The target values do not choose the rows.'],
-        ['first-last', 'The first and last stored rows', 'Array order matters only if it happens to match the X extremes.'],
-      ]),
-      part('intercept', 'After computing the slope, how is the intercept obtained?', 'through-min', [
-        ['through-min', '`ymin - coef * Xmin`', 'This makes the fitted line pass through the selected minimum-X observation.'],
-        ['mean-y', '`y.mean()`', 'The endpoint model does not center the target values.'],
-        ['through-max-wrong', '`ymax + coef * Xmax`', 'The sign would not make the line pass through the maximum-X observation.'],
-      ]),
-    ],
-    hints: [
-      'Follow `indmin` and `indmax` into all four scalar values.',
-      'Substitute Xmin into `coef * x + intercept` and require the result to equal ymin.',
-    ],
-    explanation:
-      'The endpoint implementation chooses rows solely from the smallest and largest X values, computes the rise over run, and chooses an intercept that makes the line pass through `(Xmin, ymin)`.',
-  }),
-  notebookQuestion({
-    id: 'linear-regression-normal-equation',
-    title: 'Build the Normal-Equation Design Matrix',
-    prompt:
-      'Read the shape changes and matrix products in `LinearRegression.fit`.',
-    instructions: 'Let the input feature matrix X have shape `(n, m)`.',
-    datasetId: 'linearRegressionNotebook',
-    parts: [
-      part('design-shape', 'What is the shape of `Xnew`?', 'n-m-plus-one', [
-        ['n-m-plus-one', '`(n, m + 1)`', 'The extra leading column stores ones for the intercept.'],
-        ['n-plus-one-m', '`(n + 1, m)`', 'No observation row is added.'],
-        ['m-n', '`(m, n)`', 'The feature matrix is not transposed when it is constructed.'],
-      ]),
-      part('ones-purpose', 'Why does the first column remain all ones?', 'intercept-coefficient', [
-        ['intercept-coefficient', 'It makes the intercept one entry of `coeffs`', 'Multiplying the ones column by `coeffs[0]` adds the same value to every prediction.'],
-        ['avoid-inverse', 'It prevents use of a matrix inverse', 'The implementation still calls `np.linalg.inv`.'],
-        ['normalize-target', 'It scales y to unit length', 'The target array is not normalized by this operation.'],
-      ]),
-    ],
-    hints: [
-      'Read both arguments passed to `np.ones`.',
-      'Imagine multiplying one row `[1, x1, x2]` by the coefficient vector.',
-    ],
-    explanation:
-      'The notebook augments every observation with a leading 1, so the first normal-equation coefficient is the intercept and the remaining entries are feature coefficients.',
-  }),
-  notebookQuestion({
-    id: 'linear-regression-prediction-shapes',
-    title: 'Respect Prediction Shapes',
-    prompt:
-      'Determine which arrays represent observations and features in the notebook’s prediction calls.',
-    instructions:
-      'For a one-feature model, a batch of q observations must have shape `(q, 1)`.',
-    datasetId: 'linearRegressionNotebook',
-    parts: [
-      part('two-observations', 'Which input correctly represents two one-feature observations, 200 and 220?', 'column-batch', [
-        ['column-batch', '`np.array([[200], [220]])`', 'There are two rows and one feature column.'],
-        ['flat-two', '`np.array([200, 220])`', 'This has two entries on one axis and does not align with a one-entry coefficient vector.'],
-        ['row-two', '`np.array([[200, 220]])`', 'This represents one observation with two features.'],
-      ]),
-      part('dwg-shape', 'If each source array has length n, what is the shape of `DWG = np.array([disp, wt, gr]).T`?', 'n-three', [
-        ['n-three', '`(n, 3)`', 'The transpose turns the three source rows into three feature columns.'],
-        ['three-n', '`(3, n)`', 'That is the shape before `.T`.'],
-        ['n-one', '`(n, 1)`', 'All three features remain present.'],
-      ]),
-    ],
-    hints: [
-      'Rows represent observations and columns represent features.',
-      'Construct the array before and after applying `.T`.',
-    ],
-    explanation:
-      'The prediction method uses matrix multiplication against one coefficient per feature. A batch therefore needs one row per observation; transposing the three source arrays creates the `(n, 3)` feature matrix used by the final model.',
-  }),
-  notebookQuestion({
-    id: 'linear-regression-losses',
-    title: 'Interpret RSS and MSE',
-    prompt:
-      'Compare the two loss calculations and the effect of expanding the feature matrix.',
-    instructions: 'Both losses use the same squared residuals.',
-    datasetId: 'linearRegressionNotebook',
-    parts: [
-      part('rss-mse', 'How are RSS and MSE related for n observations?', 'rss-n-mse', [
-        ['rss-n-mse', '`RSS = n * MSE`', 'MSE is the mean of the n squared residuals.'],
-        ['same-always', '`RSS = MSE`', 'They coincide only in the special case n = 1.'],
-        ['rss-sqrt', '`RSS = sqrt(MSE)`', 'Neither notebook expression takes this square root.'],
-      ]),
-      part('extra-features', 'What can be said about training RSS after adding weight and gear ratio to displacement and refitting least squares?', 'cannot-increase', [
-        ['cannot-increase', 'It cannot be larger than the best displacement-only training RSS', 'The expanded model can reproduce the old solution by assigning zero to the added coefficients.'],
-        ['must-increase', 'It must increase because there are more coefficients', 'More available coefficients do not force a worse optimum.'],
-        ['test-guarantee', 'Its test RSS must also decrease', 'A training improvement does not guarantee better generalization.'],
-      ]),
-    ],
-    hints: [
-      'Compare `.sum()` with `.mean()` on the same array.',
-      'Ask whether the larger model can represent every prediction made by the smaller model.',
-    ],
-    explanation:
-      'MSE divides RSS by the observation count. Adding columns enlarges the set of linear predictions, so the optimized training RSS cannot increase, although held-out performance can still worsen.',
-  }),
-]
 
 const polynomialRegressionQuestions: MultipleChoiceQuestionSpec[] = [
   notebookQuestion({
@@ -810,17 +704,18 @@ const softmaxQuestions: MultipleChoiceQuestionSpec[] = [
 
 function assignment(input: {
   id: string
+  version?: number
   displayNumber: number
   title: string
   topic: string
   description: string
-  questions: MultipleChoiceQuestionSpec[]
+  questions: AssignmentSpec['questions']
   lab: AssignmentSpec['questions'][number]
 }): AssignmentSpec {
   return {
     id: input.id,
     displayNumber: input.displayNumber,
-    version: 1,
+    version: input.version ?? 1,
     title: input.title,
     topic: input.topic,
     description: input.description,
@@ -831,12 +726,13 @@ function assignment(input: {
 
 export const linearRegressionAssignment = assignment({
   id: 'linear-regression',
+  version: 2,
   displayNumber: 5,
   title: 'Linear Regression',
   topic: 'Regression',
   description:
-    'Read endpoint and least-squares implementations, track feature-matrix shapes, and interpret RSS and MSE.',
-  questions: linearRegressionQuestions,
+    'Fit a line and a plane by minimizing RSS, then trace the normal-equation implementation in the notebook lab.',
+  questions: [linearFitQuestion, planeFitQuestion],
   lab: linearRegressionNotebookLab,
 })
 

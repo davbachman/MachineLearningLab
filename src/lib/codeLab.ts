@@ -40,7 +40,7 @@ export interface CodeLabQuestionSpec extends Omit<BaseQuestionSpec, 'kind' | 'va
   invocationTitle: string
   invocationLead?: string
   invocation: string
-  stages: [CodeLabStageSpec, CodeLabStageSpec, CodeLabStageSpec]
+  stages: [CodeLabStageSpec, ...CodeLabStageSpec[]]
   validator: (submission: unknown) => ValidationResult
 }
 

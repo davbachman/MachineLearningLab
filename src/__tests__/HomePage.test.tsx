@@ -33,14 +33,13 @@ describe('HomePage', () => {
       '1. Principal Component Analysis',
       '2. K-means Clustering',
       '3. k-Nearest Neighbors',
-      '5. Linear Regression',
-      '6. Polynomial Regression',
-      '7. Overfitting',
-      '8. Gradient Descent',
-      '9. Batch Gradient Descent',
-      '10. Regularization',
-      '11. Logistic Regression',
-      '12. Softmax',
+      '4. Linear Regression',
+      '5. Polynomial Regression and Overfitting',
+      '6. Gradient Descent',
+      '7. Batch Gradient Descent',
+      '8. Regularization',
+      '9. Logistic Regression',
+      '10. Softmax',
     ])
   })
 

@@ -204,7 +204,7 @@ export const batchGradientDescentNotebookLab: CodeLabQuestionSpec = defineCodeLa
   kind: 'codeLab',
   title: 'Notebook Lab: Trace Mini-batch Gradient Descent',
   prompt:
-    'Use the completed `9BatchGradientDescent.ipynb` notebook to trace its mini-batch regression implementation, including its full-data gradient denominator.',
+    'Use the completed `7BatchGradientDescent.ipynb` notebook to trace its mini-batch regression implementation, including its full-data gradient denominator.',
   instructions:
     'The displayed class is the notebook implementation. In particular, S4 and S5 divide each batch contribution by `len(X)`, not by the current batch size.',
   datasetId: 'batch-gradient-descent-notebook-v1',
@@ -367,7 +367,7 @@ export const regularizationNotebookLab: CodeLabQuestionSpec = defineCodeLabQuest
   kind: 'codeLab',
   title: 'Notebook Lab: Trace the Regularized Updates',
   prompt:
-    'Use the completed `10Regularization.ipynb` notebook to trace its L1 update and distinguish it from an implementation that puts the penalty inside the learning-rate factor.',
+    'Use the completed `8Regularization.ipynb` notebook to trace its L1 update and distinguish it from an implementation that puts the penalty inside the learning-rate factor.',
   instructions:
     'The displayed class exactly follows the notebook: S3 and S4 apply `lr` to the data gradient and `alpha` separately to the penalty gradient, including the intercept.',
   datasetId: 'regularization-notebook-v1',
@@ -535,7 +535,7 @@ export const logisticRegressionNotebookLab: CodeLabQuestionSpec = defineCodeLabQ
   kind: 'codeLab',
   title: 'Notebook Lab: Trace Logistic Predictions',
   prompt:
-    'Use the completed `11LogisticRegression.ipynb` notebook to trace sigmoid probabilities, the strict prediction threshold, accuracy, and negative mean log loss.',
+    'Use the completed `9LogisticRegression.ipynb` notebook to trace sigmoid probabilities, the strict prediction threshold, accuracy, and negative mean log loss.',
   instructions:
     'The displayed class is the notebook implementation. The fixture supplies a deterministic fitted state so the questions exercise the notebook methods without depending on a long training run.',
   datasetId: 'logistic-regression-notebook-v1',
@@ -718,7 +718,7 @@ export const softmaxNotebookLab: CodeLabQuestionSpec = defineCodeLabQuestion({
   kind: 'codeLab',
   title: 'Notebook Lab: Trace Multiclass Probabilities',
   prompt:
-    'Use the completed `12Softmax.ipynb` notebook to trace one-hot category order, row-wise softmax probabilities, category prediction, and categorical cross-entropy.',
+    'Use the completed `10Softmax.ipynb` notebook to trace one-hot category order, row-wise softmax probabilities, category prediction, and categorical cross-entropy.',
   instructions:
     'The displayed classes reproduce the notebook implementation. S4 deliberately remains the notebook’s scalar `np.mean(residuals)`; the deterministic fixture supplies a fitted state and exercises the prediction and evaluation methods.',
   datasetId: 'softmax-notebook-v1',

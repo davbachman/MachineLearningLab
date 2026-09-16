@@ -6,6 +6,9 @@ import { assignmentsById, publishedAssignments } from './data/assignments'
 
 function AssignmentRoute() {
   const params = useParams()
+  if (params.assignmentId === 'overfitting') {
+    return <Navigate replace to="/assignment/polynomial-regression" />
+  }
   const assignment = params.assignmentId ? assignmentsById[params.assignmentId] : undefined
 
   if (!assignment || !assignment.published) {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { QuestionFrame } from '../QuestionFrame'
+import { RegressionVisual } from './RegressionVisual'
 import type {
   AttemptOutcome,
   MultipleChoiceQuestionSpec,
@@ -181,6 +182,7 @@ function DatasetPanel({
   dataset: (typeof multipleChoiceDatasets)[string]
   resolved: boolean
 }) {
+  if (dataset.kind === 'regressionVisual') return <RegressionVisual dataset={dataset} />
   if (dataset.kind === 'table') {
     const tableDataset = dataset as MultipleChoiceTableDataset
     return (
@@ -328,7 +330,7 @@ export function MultipleChoiceQuestion({
         </button>
       }
     >
-      <div className="table-shell">
+      <div className="table-shell" style={dataset.kind === 'regressionVisual' && dataset.mode === 'curves' ? { gridTemplateColumns: '1fr' } : undefined}>
         <DatasetPanel dataset={dataset} resolved={showComparison} />
 
         <section className="answer-panel">

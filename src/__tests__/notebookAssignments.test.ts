@@ -7,21 +7,19 @@ import {
   linearRegressionAssignment,
   logisticRegressionAssignment,
   notebookAssignments,
-  overfittingAssignment,
   polynomialRegressionAssignment,
   regularizationAssignment,
   softmaxAssignment,
 } from '../data/notebookAssignments'
 
 const expectedAssignments = [
-  [linearRegressionAssignment, 5, '5LinearRegression.ipynb'],
-  [polynomialRegressionAssignment, 6, '6PolynomialRegression.ipynb'],
-  [overfittingAssignment, 7, '7Overfitting.ipynb'],
-  [gradientDescentAssignment, 8, '8GradientDescent.ipynb'],
-  [batchGradientDescentAssignment, 9, '9BatchGradientDescent.ipynb'],
-  [regularizationAssignment, 10, '10Regularization.ipynb'],
-  [logisticRegressionAssignment, 11, '11LogisticRegression.ipynb'],
-  [softmaxAssignment, 12, '12Softmax.ipynb'],
+  [linearRegressionAssignment, 4, '4LinearRegression.ipynb'],
+  [polynomialRegressionAssignment, 5, '5PolynomialRegression.ipynb'],
+  [gradientDescentAssignment, 6, '6GradientDescent.ipynb'],
+  [batchGradientDescentAssignment, 7, '7BatchGradientDescent.ipynb'],
+  [regularizationAssignment, 8, '8Regularization.ipynb'],
+  [logisticRegressionAssignment, 9, '9LogisticRegression.ipynb'],
+  [softmaxAssignment, 10, '10Softmax.ipynb'],
 ] as const
 
 describe('notebook-backed assignments', () => {
@@ -50,12 +48,12 @@ describe('notebook-backed assignments', () => {
   })
 
   it('publishes the rebuilt regression assignment and complete assignments for the other notebooks', () => {
-    expect(notebookAssignments).toHaveLength(8)
+    expect(notebookAssignments).toHaveLength(7)
 
     for (const [assignment, displayNumber, filename] of expectedAssignments) {
       expect(assignment.published).toBe(true)
       expect(assignment.displayNumber).toBe(displayNumber)
-      expect(assignment.questions.map((question) => question.kind)).toEqual(assignment.id === 'linear-regression' ? ['linearFit', 'planeFit', 'codeLab'] : [
+      expect(assignment.questions.map((question) => question.kind)).toEqual(assignment.id === 'linear-regression' ? ['linearFit', 'planeFit', 'codeLab'] : assignment.id === 'polynomial-regression' ? ['multipleChoice', 'multipleChoice', 'multipleChoice', 'multipleChoice', 'multipleChoice', 'codeLab', 'codeLab'] : [
         'multipleChoice',
         'multipleChoice',
         'multipleChoice',
@@ -114,26 +112,17 @@ describe('notebook-backed assignments', () => {
     }
   })
 
-  it('tests literal notebook behavior where the supplied code and prose differ', () => {
-    const splitQuestion = overfittingAssignment.questions[0]
-    const auditQuestion = overfittingAssignment.questions[3]
-
-    expect(
-      splitQuestion.validator({
-        selectedIds: {
-          'split-fractions': 'twenty-eighty',
-          repeatability: 'no-random-state',
-        },
-      }).correct,
-    ).toBe(true)
-    expect(
-      auditQuestion.validator({
-        selectedIds: {
-          'first-failure': 'name-error',
-          'best-degree-rule': 'test-argmin-plus-one',
-        },
-      }).correct,
-    ).toBe(true)
+  it('combines polynomial regression and overfitting with visual warmups and short notebook checkpoints', () => {
+    expect(polynomialRegressionAssignment.version).toBe(2)
+    expect(polynomialRegressionAssignment.title).toBe('Polynomial Regression and Overfitting')
+    expect(notebookAssignments.some(a => a.id === 'overfitting')).toBe(false)
+    expect(polynomialRegressionAssignment.questions[0].datasetId).toBe('polynomialCurves')
+    expect(polynomialRegressionAssignment.questions[3].datasetId).toBe('polynomialErrors')
+    for (const q of polynomialRegressionAssignment.questions.filter(q => q.kind === 'codeLab')) {
+      expect(q.stages.every(s => s.fields.length === 1)).toBe(true)
+      expect(q.prompt).toContain('5PolynomialRegression.ipynb')
+      expect(q.code).not.toContain('from sklearn')
+    }
   })
 
   it('uses unique assignment and question IDs', () => {

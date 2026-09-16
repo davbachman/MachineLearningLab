@@ -61,6 +61,14 @@ The rebuilt Linear Regression assignment (version 2) contains three questions: i
 
 The Linear Regression notebook lab uses variant `linear-regression-notebook-v3`, with nine single-answer checkpoints. Each calculation can be checked and recorded separately; the grader awards partial credit per answer, including for an unfinished lab.
 
+## Combined polynomial regression and overfitting assignment
+
+Homework 5 now uses `Homework2026/5PolynomialRegression.ipynb` and the app assignment **Polynomial Regression and Overfitting** (ID `polynomial-regression`, version 2). Upload `gradescope/dist/polynomial-regression.zip` for the combined seven-question assignment. The two notebook labs grade each checkpoint independently for partial credit. The former separate Overfitting assignment is no longer published, and its obsolete ZIP is no longer generated. Version-1 polynomial submissions are not the rebuilt assignment and are rejected rather than graded against the new questions.
+
+K-NN is Homework 3 with notebooks `3aKNN.ipynb` and `3bKNN.ipynb`; Linear Regression is Homework 4; later assignments are numbered consecutively. Renumbering alone does not change existing assignment IDs or their answer-key versions. See `Homework2026/README.md` for the full mapping.
+
+The combined notebook and Python answer traces can be checked with `python3 scripts/verify_polynomial_notebook.py` after installing NumPy, pandas, matplotlib, scikit-learn, nbformat, and the app's npm dependencies. This executes the notebook and checks the actual app answer choices against its classes.
+
 ## Local runner paths
 
 On Gradescope, the runner uses the official paths:

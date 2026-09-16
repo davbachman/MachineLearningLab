@@ -42,11 +42,19 @@ export interface MultipleChoiceElbowDataset {
   }[]
 }
 
+export interface RegressionVisualDataset {
+  id: string
+  kind: 'regressionVisual'
+  mode: 'curves' | 'errors'
+  caption: string
+}
+
 export type MultipleChoiceDataset =
   | MultipleChoiceTableDataset
   | MultipleChoicePointCloudScenariosDataset
   | MultipleChoiceMetricComparisonDataset
   | MultipleChoiceElbowDataset
+  | RegressionVisualDataset
 
 const houseFeatureRows = [
   [210000, 2],
@@ -98,6 +106,35 @@ const metricPoints: Vec2[] = [
 ]
 
 export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
+  polynomialCurves: {
+    id: 'polynomialCurves', kind: 'regressionVisual', mode: 'curves',
+    caption: 'Three least-squares models fitted to the same twelve training observations. These small example data are separate from the car dataset. All panels use identical axes; no validation observations are shown.',
+  },
+  polynomialErrors: {
+    id: 'polynomialErrors', kind: 'regressionVisual', mode: 'errors',
+    caption: 'Car displacement/MPG results from the combined notebook. Teal circles show training MSE; orange squares show validation MSE. Smaller is better.',
+  },
+  polynomialFeatureTrace: {
+    id: 'polynomialFeatureTrace', kind: 'table', title: 'Scaled inputs',
+    headers: ['Observation', 'x'], rows: [[1, -2], [2, -1], [3, 0], [4, 2]],
+    caption: 'X = np.array([-2.0, -1.0, 0.0, 2.0]).',
+  },
+  polynomialModelReference: {
+    id: 'polynomialModelReference', kind: 'table', title: 'Custom model pipeline',
+    headers: ['Step', 'Code'], rows: [
+      ['Features', 'PolynomialFeatures(2, include_bias=False)'],
+      ['Fit', 'LinearRegression().fit(features, ytrain)'],
+      ['Inside fit', 'Xnew = ones((n, m+1)); Xnew[:,1:] = features'],
+      ['Solve', 'coeffs = inv(Xnew.T @ Xnew) @ (Xnew.T @ ytrain)'],
+    ], caption: 'The notebook defines all three classes itself. The regression model supplies its own intercept column.',
+  },
+  polynomialEvaluationReference: {
+    id: 'polynomialEvaluationReference', kind: 'table', title: 'Training and validation',
+    headers: ['Quantity', 'Meaning'], rows: [
+      ['Xtrain, ytrain', '80% used for learning'], ['Xval, yval', '20% held out for degree selection'],
+      ['metrics[d, 0]', 'Training MSE for degree d+1'], ['metrics[d, 1]', 'Validation MSE for degree d+1'],
+    ], caption: 'The same split and preprocessing are reused across degrees. MSE averages squared errors so different set sizes can be compared.',
+  },
   numpyMiniArrays: {
     id: 'numpyMiniArrays',
     kind: 'table',
@@ -179,7 +216,7 @@ export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
   linearRegressionNotebook: {
     id: 'linearRegressionNotebook',
     kind: 'table',
-    title: '5LinearRegression.ipynb reference',
+    title: '4LinearRegression.ipynb reference',
     headers: ['Notebook element', 'Exact implementation'],
     rows: [
       ['Endpoint model', 'coef = (ymax - ymin) / (Xmax - Xmin)'],
@@ -194,7 +231,7 @@ export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
   polynomialRegressionNotebook: {
     id: 'polynomialRegressionNotebook',
     kind: 'table',
-    title: '6PolynomialRegression.ipynb reference',
+    title: '5PolynomialRegression.ipynb reference',
     headers: ['Notebook element', 'Exact implementation'],
     rows: [
       ['Scale', '(X - mean) / std'],
@@ -206,25 +243,10 @@ export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
     caption:
       'The notebook scales displacement before generating polynomial powers, then fits an ordinary linear model to the engineered feature matrix.',
   },
-  overfittingNotebook: {
-    id: 'overfittingNotebook',
-    kind: 'table',
-    title: '7Overfitting.ipynb reference',
-    headers: ['Notebook line', 'Consequence'],
-    rows: [
-      ['train_test_split(..., test_size=0.8)', '20% train, 80% test'],
-      ['disp_scaler.fit(Xtrain)', 'training data determines scale'],
-      ['PolynomialFeatures(8, include_bias=True)', '9 output columns'],
-      ['metrics[d, :]', '[training MSE, testing MSE]'],
-      ['MSE', 'mean squared error permits split-size comparison'],
-    ],
-    caption:
-      'Read the executable code literally: the split argument differs from the nearby 80/20 prose, and the metrics columns have different roles.',
-  },
   gradientDescentNotebook: {
     id: 'gradientDescentNotebook',
     kind: 'table',
-    title: '8GradientDescent.ipynb reference',
+    title: '6GradientDescent.ipynb reference',
     headers: ['Notebook element', 'Exact implementation'],
     rows: [
       ['Residuals', 'predict(X) - y'],
@@ -239,7 +261,7 @@ export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
   batchGradientDescentNotebook: {
     id: 'batchGradientDescentNotebook',
     kind: 'table',
-    title: '9BatchGradientDescent.ipynb reference',
+    title: '7BatchGradientDescent.ipynb reference',
     headers: ['Notebook element', 'Exact implementation'],
     rows: [
       ['Epoch seed', 'np.random.seed(i)'],
@@ -254,7 +276,7 @@ export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
   regularizationNotebook: {
     id: 'regularizationNotebook',
     kind: 'table',
-    title: '10Regularization.ipynb reference',
+    title: '8Regularization.ipynb reference',
     headers: ['Notebook element', 'Exact implementation'],
     rows: [
       ['L1 penalty gradient', 'np.sign(parameter)'],
@@ -269,7 +291,7 @@ export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
   logisticRegressionNotebook: {
     id: 'logisticRegressionNotebook',
     kind: 'table',
-    title: '11LogisticRegression.ipynb reference',
+    title: '9LogisticRegression.ipynb reference',
     headers: ['Notebook element', 'Exact implementation'],
     rows: [
       ['Linear score', 't = X @ coef + intercept'],
@@ -284,7 +306,7 @@ export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
   softmaxNotebook: {
     id: 'softmaxNotebook',
     kind: 'table',
-    title: '12Softmax.ipynb reference',
+    title: '10Softmax.ipynb reference',
     headers: ['Notebook element', 'Shape or operation'],
     rows: [
       ['One-hot target Y', '(observations, classes)'],

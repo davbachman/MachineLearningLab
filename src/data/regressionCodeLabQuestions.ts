@@ -1,4 +1,4 @@
-import { defineCodeLabQuestion, type CodeLabQuestionSpec } from '../lib/codeLab'
+import { defineCodeLabQuestion, type CodeLabQuestionSpec, type CodeLabStageSpec } from '../lib/codeLab'
 
 const linearRegressionCode = `import numpy as np
 
@@ -54,20 +54,6 @@ class PolynomialFeatures():
 
         return out  # S9`
 
-const overfittingCode = `import numpy as np
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
-
-deg8=PolynomialFeatures(8,include_bias=True)  # S1
-deg8_train_feats=deg8.fit_transform(scaled_Xtrain)  # S2
-deg8_test_feats=deg8.fit_transform(scaled_Xtest)  # S3
-
-deg8_model=LinearRegression(fit_intercept=False)  # S4
-deg8_model.fit(deg8_train_feats,ytrain)  # S5
-
-deg8_train_predictions=deg8_model.predict(deg8_train_feats)  # S6
-deg8_test_predictions=deg8_model.predict(deg8_test_feats)  # S7`
-
 const gradientDescentCode = `import numpy as np
 
 class GDRegressor():
@@ -93,7 +79,7 @@ export const linearRegressionNotebookLab: CodeLabQuestionSpec = defineCodeLabQue
   kind: 'codeLab',
   title: 'Notebook Lab: Trace the Normal-Equation Model',
   prompt:
-    'Use the completed `5LinearRegression.ipynb` notebook to trace its normal-equation implementation, then diagnose a prediction method that drops the fitted intercept.',
+    'Use the completed `4LinearRegression.ipynb` notebook to trace its normal-equation implementation, then diagnose a prediction method that drops the fitted intercept.',
   instructions:
     'The displayed class is the notebook implementation with statement labels added. Work through one calculation at a time and check each answer before continuing. Array answers are displayed as lists; fractions represent exact values. Ignore floating-point roundoff.',
   datasetId: 'linear-regression-notebook-v3',
@@ -336,11 +322,11 @@ export const polynomialRegressionNotebookLab: CodeLabQuestionSpec = defineCodeLa
   kind: 'codeLab',
   title: 'Notebook Lab: Trace Scaling and Polynomial Features',
   prompt:
-    'Use the completed `6PolynomialRegression.ipynb` notebook to trace its `StandardScaler` and `PolynomialFeatures` implementations.',
+    'Use the completed `5PolynomialRegression.ipynb` notebook to trace its `StandardScaler` and `PolynomialFeatures` implementations.',
   instructions:
     'The displayed classes reproduce the notebook code with statement labels added. The two trace values were chosen so their population mean and standard deviation are exact integers.',
-  datasetId: 'polynomial-regression-notebook-v1',
-  variantId: 'polynomial-regression-notebook-v1',
+  datasetId: 'polynomial-regression-notebook-v2',
+  variantId: 'polynomial-regression-notebook-v2',
   language: 'python',
   code: polynomialRegressionCode,
   fixtureTitle: 'Two values with mean 2 and standard deviation 1',
@@ -365,11 +351,11 @@ restored = scaler.inverse_transform(scaled)`,
     {
       id: 'TRACE',
       kind: 'executionTrace',
-      title: '1. Trace scaling and feature engineering',
+      title: '1. Scale the inputs',
       prompt:
-        'Mentally execute the notebook classes. What are the scaled values, cubic feature matrix, and restored values?',
+        'Run scaler.fit(X_trace), then scaler.transform(X_trace). What is scaled.tolist()?',
       successCopy:
-        'Correct: scaling maps 1 and 3 to -1 and 1, powers 1 through 3 fill the three feature columns, and inverse transformation recovers the original values.',
+        'Correct: the mean is 2 and the population standard deviation is 1, so scaling produces [-1.0, 1.0].',
       fields: [
         {
           id: 'SCALED',
@@ -381,6 +367,13 @@ restored = scaler.inverse_transform(scaled)`,
             { id: 'SCALED_NEG2_2', label: '[-2.0, 2.0]' },
           ],
         },
+      ],
+    },
+    {
+      id: 'FEATURES', kind: 'executionTrace', title: '2. Build the powers',
+      prompt: 'Continue with poly.fit_transform(scaled). Use the default include_bias=False.',
+      successCopy: 'Correct: the columns are scaled, scaled**2, and scaled**3, with one row per observation.',
+      fields: [
         {
           id: 'FEATURES',
           label: 'features.tolist()',
@@ -400,6 +393,13 @@ restored = scaler.inverse_transform(scaled)`,
             },
           ],
         },
+      ],
+    },
+    {
+      id: 'RESTORE', kind: 'executionTrace', title: '3. Undo scaling',
+      prompt: 'Now evaluate scaler.inverse_transform(scaled).',
+      successCopy: 'Correct: multiply by the stored standard deviation 1, then add the stored mean 2, recovering [1.0, 3.0].',
+      fields: [
         {
           id: 'RESTORED',
           label: 'restored.tolist()',
@@ -415,7 +415,7 @@ restored = scaler.inverse_transform(scaled)`,
     {
       id: 'MUTATION',
       kind: 'diagnoseMutation',
-      title: '2. Read a changed exponent',
+      title: '4. Read a changed exponent',
       prompt:
         'Suppose S8 were changed from `out[:,i]=X**(i+1)` to `out[:,i]=X**i`. What would `features.tolist()` become?',
       successCopy:
@@ -445,7 +445,7 @@ restored = scaler.inverse_transform(scaled)`,
     {
       id: 'TEST',
       kind: 'distinguishingTest',
-      title: '3. Choose a distinguishing test',
+      title: '5. Choose a distinguishing test',
       prompt:
         'Which assertion passes for the notebook implementation but fails when S8 starts at power zero?',
       successCopy:
@@ -489,176 +489,62 @@ restored = scaler.inverse_transform(scaled)`,
     'Notebook Lab complete: scaling, polynomial feature construction, mutation diagnosis, and testing are all correct.',
 })
 
-export const overfittingNotebookLab: CodeLabQuestionSpec = defineCodeLabQuestion({
-  id: 'overfitting-notebook-lab',
-  kind: 'codeLab',
-  title: 'Notebook Lab: Trace Degree-Eight Features',
-  prompt:
-    'Use the completed `7Overfitting.ipynb` notebook to trace the degree-eight feature matrix used by its sklearn linear model.',
-  instructions:
-    'The displayed statements reproduce the notebook degree-eight block with statement labels added. This deterministic trace isolates that runnable block: the notebook later calls an undefined `PolynomialRegression` in its metrics loop, and its `test_size=0.8` call places 80% of the data in the test set.',
-  datasetId: 'overfitting-notebook-v1',
-  variantId: 'overfitting-notebook-v1',
-  language: 'python',
-  code: overfittingCode,
-  fixtureTitle: 'Deterministic scaled train and test arrays',
-  fixtureHeading: 'Trace data',
-  fixture: `scaled_Xtrain = np.array([
-    [-1.0],
-    [ 0.0],
-    [ 2.0],
-])
-ytrain = np.array([1.0, 2.0, 5.0])
-scaled_Xtest = np.array([[1.0]])`,
-  invocationTitle: 'Feature expressions to inspect',
-  invocationLead: 'After running S1 through S7 on the fixture, Python evaluates:',
-  invocation: `feature_shape = deg8_train_feats.shape
-negative_row = deg8_train_feats[0, :].tolist()
-positive_row = deg8_train_feats[2, :].tolist()`,
-  hintSchedule: [2, 4, 6],
-  hints: [
-    'A degree-eight transformer with `include_bias=True` makes columns for exponents zero through eight, for nine columns total.',
-    'Powers of -1 alternate between -1 and 1, while the zero-degree column is always 1.',
-    'Turning off `include_bias` removes only the exponent-zero column; the final `x**8` column remains.',
+function evaluationCheckpoint(id: string, title: string, prompt: string, label: string, options: string[], successCopy: string, kind: CodeLabStageSpec['kind'] = 'executionTrace'): CodeLabStageSpec {
+  return { id, title, prompt, kind, successCopy,
+    fields: [{ id: 'ANSWER', label, correctOptionId: `${id}_0`, options: options.map((label,i) => ({ id: `${id}_${i}`, label })) }] }
+}
+
+export const polynomialEvaluationNotebookLab: CodeLabQuestionSpec = defineCodeLabQuestion({
+  id: 'polynomial-evaluation-notebook-lab', kind: 'codeLab',
+  title: 'Notebook Lab: Fit, Predict, and Evaluate',
+  prompt: 'Use the from-scratch classes in 5PolynomialRegression.ipynb to trace a quadratic fit and its held-out errors.',
+  instructions: 'The displayed code isolates the degree-2 iteration of the notebook metrics loop, then uses its plotting-order operation. First define PolynomialFeatures and LinearRegression from the notebook—not sklearn. The fixture arrays are already scaled in one common coordinate system. Ignore floating-point roundoff. Array answers are shown as lists.',
+  datasetId: 'polynomial-evaluation-v1', variantId: 'polynomial-evaluation-v1', language: 'python',
+  code: `# Use the custom classes defined in the notebook.
+poly=PolynomialFeatures(2)  # S1
+train_feats=poly.fit_transform(scaled_Xtrain)  # S2
+val_feats=poly.fit_transform(scaled_Xval)  # S3
+model=LinearRegression()
+model.fit(train_feats,ytrain)  # S4
+train_predictions=model.predict(train_feats)  # S5
+val_predictions=model.predict(val_feats)  # S6
+MSEtrain=((train_predictions-ytrain)**2).mean()  # S7
+MSEval=((val_predictions-yval)**2).mean()  # S8
+
+order=np.argsort(scaled_Xtrain)  # S9`,
+  fixtureTitle: 'Already-scaled inputs and targets', fixtureHeading: 'Trace data',
+  fixture: `scaled_Xtrain=np.array([2.0, -1.0, 1.0, 0.0])
+ytrain=np.array([5.0, 2.0, 2.0, 1.0])
+scaled_Xval=np.array([0.5, 1.5])
+yval=np.array([1.0, 3.0])`,
+  invocationTitle: 'Values to inspect after S1–S9', invocationLead: 'After defining the two custom classes, run the fixture, then S1–S9. Inspect:',
+  invocation: `train_feats.shape
+val_feats.tolist()
+model.coef.tolist()
+model.intercept
+val_predictions.tolist()
+MSEtrain
+MSEval
+order.tolist()`,
+  hintSchedule: [2,4,6], hints: [
+    'The two engineered columns are x and x². LinearRegression adds the column of ones itself.',
+    'Every training target equals 1 + x². The two validation residuals both have magnitude 0.25.',
+    'Square residuals before averaging. Sorting must apply the same index order to inputs and predictions.',
   ],
   stages: [
-    {
-      id: 'TRACE',
-      kind: 'executionTrace',
-      title: '1. Trace the degree-eight feature matrix',
-      prompt:
-        'Mentally execute the displayed sklearn transformation. What shape and two feature rows are produced?',
-      successCopy:
-        'Correct: `include_bias=True` produces nine columns ordered as `1, x, x**2, ..., x**8`.',
-      fields: [
-        {
-          id: 'FEATURE_SHAPE',
-          label: 'feature_shape',
-          correctOptionId: 'SHAPE_3_9',
-          options: [
-            { id: 'SHAPE_3_9', label: '(3, 9)' },
-            { id: 'SHAPE_3_8', label: '(3, 8)' },
-            { id: 'SHAPE_9_3', label: '(9, 3)' },
-          ],
-        },
-        {
-          id: 'NEGATIVE_ROW',
-          label: 'negative_row',
-          correctOptionId: 'NEGATIVE_WITH_BIAS',
-          options: [
-            {
-              id: 'NEGATIVE_WITH_BIAS',
-              label: '[1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0]',
-            },
-            {
-              id: 'NEGATIVE_WITHOUT_BIAS',
-              label: '[-1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0]',
-            },
-            {
-              id: 'NEGATIVE_ALL_ONES',
-              label: '[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]',
-            },
-          ],
-        },
-        {
-          id: 'POSITIVE_ROW',
-          label: 'positive_row',
-          correctOptionId: 'POSITIVE_WITH_BIAS',
-          options: [
-            {
-              id: 'POSITIVE_WITH_BIAS',
-              label: '[1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0]',
-            },
-            {
-              id: 'POSITIVE_WITHOUT_BIAS',
-              label: '[2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0]',
-            },
-            {
-              id: 'POSITIVE_EVEN_SEQUENCE',
-              label: '[1.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0]',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'MUTATION',
-      kind: 'diagnoseMutation',
-      title: '2. Remove the explicit bias feature',
-      prompt:
-        'Suppose S1 were changed to `PolynomialFeatures(8,include_bias=False)`. What would the feature shape and `negative_row` become?',
-      successCopy:
-        'Correct: disabling the bias removes the leading exponent-zero column, leaving powers one through eight.',
-      fields: [
-        {
-          id: 'MUTATED_SUMMARY',
-          label: '(feature_shape, negative_row) after the change',
-          correctOptionId: 'MUTATED_NO_BIAS',
-          options: [
-            {
-              id: 'MUTATED_NO_BIAS',
-              label:
-                '((3, 8), [-1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0])',
-            },
-            {
-              id: 'MUTATED_UNCHANGED',
-              label:
-                '((3, 9), [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0])',
-            },
-            {
-              id: 'MUTATED_DROP_HIGHEST',
-              label:
-                '((3, 8), [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0])',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'TEST',
-      kind: 'distinguishingTest',
-      title: '3. Choose a distinguishing test',
-      prompt:
-        'Which assertion passes for the notebook feature construction but fails when `include_bias=False`?',
-      successCopy:
-        'Correct: only the reference matrix has nine columns. Both versions retain three rows, finite entries, and the final value `2**8 = 256`.',
-      fields: [
-        {
-          id: 'TEST_ID',
-          label: 'Test',
-          correctOptionId: 'TEST_NINE_COLUMNS',
-          options: [
-            {
-              id: 'TEST_NINE_COLUMNS',
-              label: 'Check for the bias column in the shape',
-              description: '`assert deg8_train_feats.shape == (3, 9)`',
-            },
-            {
-              id: 'TEST_THREE_ROWS',
-              label: 'Check only the number of observations',
-              description: '`assert deg8_train_feats.shape[0] == 3`',
-            },
-            {
-              id: 'TEST_HIGHEST_POWER',
-              label: 'Check only the highest power',
-              description: '`assert deg8_train_feats[-1, -1] == 256`',
-            },
-            {
-              id: 'TEST_FINITE_FEATURES',
-              label: 'Check only that all entries are finite',
-              description: '`assert np.all(np.isfinite(deg8_train_feats))`',
-            },
-          ],
-        },
-      ],
-    },
+    evaluationCheckpoint('TRACE', '1. Count the feature columns', 'Trace S1 and S2 with the default bias setting.', 'train_feats.shape', ['(4, 2)', '(4, 3)', '(2, 4)'], 'Correct: four observations and two columns, x and x².'),
+    evaluationCheckpoint('VAL_FEATURES', '2. Transform the validation inputs', 'Trace S3 without fitting any new scaling parameters.', 'val_feats.tolist()', ['[[0.5, 0.25], [1.5, 2.25]]', '[[1.0, 0.5, 0.25], [1.0, 1.5, 2.25]]', '[[0.5, 1.0], [1.5, 3.0]]'], 'Correct: each row contains one scaled input and its square.'),
+    evaluationCheckpoint('COEF', '3. Read the fitted coefficients', 'Trace S4 using the custom normal-equation model.', 'model.coef.tolist()', ['[0.0, 1.0]', '[1.0, 0.0]', '[1.0, 0.0, 1.0]'], 'Correct: y = 1 + x² has coefficient 0 for x and coefficient 1 for x²; the intercept is stored separately.'),
+    evaluationCheckpoint('INTERCEPT', '4. Read the intercept', 'What scalar does S4 store separately from model.coef?', 'model.intercept', ['1.0', '0.0', '2.0'], 'Correct: the constant term of 1 + x² is 1.'),
+    evaluationCheckpoint('PREDICT', '5. Predict the validation targets', 'Trace S6 using the same fitted parameters.', 'val_predictions.tolist()', ['[1.25, 3.25]', '[0.25, 2.25]', '[1.0, 3.0]'], 'Correct: 1 + 0.5² = 1.25 and 1 + 1.5² = 3.25. Predictions need not equal the held-out targets.'),
+    evaluationCheckpoint('TRAIN_MSE', '6. Measure training error', 'Trace S5 and S7. Ignore roundoff.', 'MSEtrain', ['0.0', '0.0625', '1.0'], 'Correct: all four training targets lie exactly on the fitted quadratic.'),
+    evaluationCheckpoint('VAL_MSE', '7. Measure validation error', 'Trace S8; the validation targets are [1.0, 3.0].', 'MSEval', ['0.0625', '0.125', '0.25'], 'Correct: the two squared errors are 0.0625 and 0.0625, whose mean is 0.0625. Zero training error does not imply zero validation error.'),
+    evaluationCheckpoint('ORDER', '8. Put the curve in plotting order', 'Trace S9. Use this same order for both scaled_Xtrain and train_predictions.', 'order.tolist()', ['[1, 3, 2, 0]', '[-1.0, 0.0, 1.0, 2.0]', '[0, 1, 2, 3]'], 'Correct: argsort returns indices, not sorted values. Applying [1, 3, 2, 0] to both arrays preserves every input/prediction pair.'),
+    evaluationCheckpoint('MUTATION', '9. Replace mean with sum', 'Suppose S8 uses .sum() instead of .mean(), with everything else unchanged.', 'MSEval after this change', ['0.125', '0.0625', '0.25'], 'Correct: the sum is 0.125. Despite the variable name, this changed code computes RSS rather than MSE.', 'diagnoseMutation'),
+    evaluationCheckpoint('TEST', '10. Detect the changed reduction', 'Using the original fixture, which assertion passes for the original S8 but fails for the sum mutation? Use np.isclose to allow roundoff.', 'Assertion', ['assert np.isclose(MSEval, 0.0625)', 'assert MSEval >= 0', 'assert np.isfinite(MSEval)'], 'Correct: the expected numerical mean distinguishes the two reductions; positivity and finiteness do not.', 'distinguishingTest'),
   ],
-  reveal: {
-    explanation:
-      'The notebook asks sklearn for all polynomial powers through degree eight and explicitly includes the constant column, so the feature matrix has nine columns. Its linear model correspondingly uses `fit_intercept=False`. Disabling the bias removes the first column but does not remove `x**8`. Separately, the later metrics loop cannot execute until `PolynomialRegression` is defined or replaced with the imported sklearn classes.',
-  },
-  successCopy:
-    'Notebook Lab complete: degree-eight features, explicit bias handling, mutation diagnosis, and testing are all correct.',
+  reveal: { explanation: 'The from-scratch model fits 1 + x². Validation error averages squared residuals on held-out targets. Sorting for plotting changes only display order, not the fitted parameters or errors.' },
+  successCopy: 'Notebook Lab complete: feature construction, fitting, predictions, MSE, plotting order, and the changed reduction are all checked.',
 })
 
 export const gradientDescentNotebookLab: CodeLabQuestionSpec = defineCodeLabQuestion({
@@ -666,7 +552,7 @@ export const gradientDescentNotebookLab: CodeLabQuestionSpec = defineCodeLabQues
   kind: 'codeLab',
   title: 'Notebook Lab: Trace One Gradient Step',
   prompt:
-    'Use the completed `8GradientDescent.ipynb` notebook to trace one iteration of its `GDRegressor` and diagnose a reversed residual.',
+    'Use the completed `6GradientDescent.ipynb` notebook to trace one iteration of its `GDRegressor` and diagnose a reversed residual.',
   instructions:
     'The displayed class is the notebook implementation with statement labels added. With `max_iter=1`, begin from the coefficient and intercept values assigned at S1 and S2 and execute exactly one update.',
   datasetId: 'gradient-descent-notebook-v1',

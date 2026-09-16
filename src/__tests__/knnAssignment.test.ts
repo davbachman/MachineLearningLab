@@ -14,8 +14,8 @@ describe('knnAssignment validators', () => {
       'Notebook Lab: Read the k-NN Implementation',
       'Notebook Lab: Evaluate and Select a k-NN Model',
     ])
-    expect(knnAssignment.questions.at(-2)?.prompt).toContain('3KNN.ipynb')
-    expect(knnAssignment.questions.at(-1)?.prompt).toContain('4KNN.ipynb')
+    expect(knnAssignment.questions.at(-2)?.prompt).toContain('3aKNN.ipynb')
+    expect(knnAssignment.questions.at(-1)?.prompt).toContain('3bKNN.ipynb')
   })
 
   it('checks all three k values in the classification-sequence question', () => {

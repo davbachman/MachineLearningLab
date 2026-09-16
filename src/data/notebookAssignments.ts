@@ -4,13 +4,13 @@ import type {
   MultipleChoiceQuestionSpec,
 } from '../types'
 import { validateMultipleChoiceSelections } from '../lib/questionValidation'
+import { polynomialRegressionAssignment } from './polynomialAssignment'
+export { polynomialRegressionAssignment } from './polynomialAssignment'
 import { linearFitQuestion } from './linearFitQuestion'
 import { planeFitQuestion } from './planeFitQuestion'
 import {
   gradientDescentNotebookLab,
   linearRegressionNotebookLab,
-  overfittingNotebookLab,
-  polynomialRegressionNotebookLab,
 } from './regressionCodeLabQuestions'
 import {
   batchGradientDescentNotebookLab,
@@ -63,188 +63,6 @@ function notebookQuestion(input: {
   }
 }
 
-
-const polynomialRegressionQuestions: MultipleChoiceQuestionSpec[] = [
-  notebookQuestion({
-    id: 'polynomial-scaling',
-    title: 'Trace StandardScaler',
-    prompt: 'Read what the notebook scaler learns and how it reverses a transformation.',
-    instructions: 'For a matrix, `axis=0` computes one value per feature column.',
-    datasetId: 'polynomialRegressionNotebook',
-    parts: [
-      part('learned-values', 'What does `fit` store for an `(n, m)` matrix?', 'm-means-stds', [
-        ['m-means-stds', 'm column means and m column standard deviations', 'Both reductions use `axis=0`.'],
-        ['n-row-values', 'n row means and n row standard deviations', 'That would require `axis=1`.'],
-        ['one-global-pair', 'one global mean and standard deviation', 'The axis argument prevents a global reduction.'],
-      ]),
-      part('inverse', 'Which expression reverses `transform`?', 'multiply-add', [
-        ['multiply-add', '`X * self.std + self.mean`', 'Undo division first, then restore the mean.'],
-        ['subtract-divide', '`(X - self.mean) / self.std`', 'That applies the forward transformation again.'],
-        ['add-divide', '`(X + self.mean) / self.std`', 'The operations are not inverted in reverse order.'],
-      ]),
-    ],
-    hints: ['Track the output shape of an `axis=0` reduction.', 'Reverse subtraction/division in reverse order.'],
-    explanation:
-      'The scaler stores column statistics. Its inverse multiplies a standardized value by the stored standard deviation and then adds the stored mean.',
-  }),
-  notebookQuestion({
-    id: 'polynomial-feature-shapes',
-    title: 'Build Polynomial Features',
-    prompt: 'Determine the columns produced by both branches of `PolynomialFeatures.fit_transform`.',
-    instructions: 'The notebook accepts a one-dimensional input X.',
-    datasetId: 'polynomialRegressionNotebook',
-    parts: [
-      part('degree-three-no-bias', 'For degree 3 with `include_bias=False`, what columns are returned?', 'powers-one-three', [
-        ['powers-one-three', '`X, X**2, X**3`', 'The loop stores powers `i + 1` for i = 0, 1, 2.'],
-        ['powers-zero-two', '`1, X, X**2`', 'That is the include-bias convention for degree 2.'],
-        ['only-cube', '`X**3` only', 'Every power through the requested degree is included.'],
-      ]),
-      part('degree-three-bias-shape', 'For n values, degree 3, and `include_bias=True`, what is the output shape?', 'n-four', [
-        ['n-four', '`(n, 4)`', 'The columns are powers 0, 1, 2, and 3.'],
-        ['n-three', '`(n, 3)`', 'This omits the bias column.'],
-        ['four-n', '`(4, n)`', 'Observations remain rows.'],
-      ]),
-    ],
-    hints: ['List the loop indices in each branch.', '`X**0` is the bias column of ones.'],
-    explanation:
-      'Without bias the implementation returns degree columns for powers 1 through degree. With bias it returns degree + 1 columns beginning with power zero.',
-  }),
-  notebookQuestion({
-    id: 'polynomial-linear-model',
-    title: 'Interpret the Engineered Model',
-    prompt: 'Explain why the notebook can fit a curved function with `LinearRegression`.',
-    instructions: 'Distinguish linearity in the coefficients from linearity in the original input.',
-    datasetId: 'polynomialRegressionNotebook',
-    parts: [
-      part('nonlinearity-source', 'Where does the nonlinearity in displacement come from?', 'engineered-powers', [
-        ['engineered-powers', 'The feature matrix contains powers of scaled displacement', 'The model is linear in coefficients but nonlinear in the original scalar input.'],
-        ['changed-loss', 'LinearRegression switches to a nonlinear loss', 'The loss and solver remain ordinary least squares.'],
-        ['inverse-scaler', 'The inverse scaler curves the target', 'The target mpg is not inverse-transformed.'],
-      ]),
-      part('scale-first', 'Why does the notebook scale displacement before taking high powers?', 'control-magnitudes', [
-        ['control-magnitudes', 'To keep polynomial feature magnitudes manageable', 'Centered, unit-scale values avoid enormous raw powers.'],
-        ['sort-values', 'To sort observations by displacement', 'Sorting is performed separately with `np.argsort`.'],
-        ['add-bias', 'To create the intercept column', 'Scaling does not add a column.'],
-      ]),
-    ],
-    hints: ['Write a prediction as c1*x + c2*x².', 'Compare 400³ with a standardized value near 1 cubed.'],
-    explanation:
-      'Linear regression can weight nonlinear basis functions such as x² and x³. Scaling before constructing them improves numerical behavior without changing which row is which.',
-  }),
-  notebookQuestion({
-    id: 'polynomial-code-trace',
-    title: 'Trace a Feature Matrix',
-    prompt: 'Mentally execute the notebook class on a two-value input.',
-    instructions: 'Use `X = np.array([2, 3])` and degree 2.',
-    datasetId: 'polynomialRegressionNotebook',
-    parts: [
-      part('bias-output', 'What does `PolynomialFeatures(2, include_bias=True).fit_transform(X)` return?', 'bias-matrix', [
-        ['bias-matrix', '`[[1, 2, 4], [1, 3, 9]]`', 'The columns are X**0, X**1, and X**2.'],
-        ['no-bias-matrix', '`[[2, 4], [3, 9]]`', 'This is the no-bias branch.'],
-        ['transposed-matrix', '`[[1, 1], [2, 3], [4, 9]]`', 'The implementation keeps observations in rows.'],
-      ]),
-      part('column-index', 'In `scaled_disp2[:, 1]`, what does column 1 contain?', 'squared-scaled', [
-        ['squared-scaled', '`scaled_disp**2`', 'Zero-based column 1 is the second engineered feature.'],
-        ['raw-disp', 'unscaled displacement', 'The feature generator receives `scaled_disp`.'],
-        ['bias', 'ones', 'The notebook created `quad` with the default `include_bias=False`.'],
-      ]),
-    ],
-    hints: ['Evaluate powers 0, 1, and 2 row by row.', 'Check how `quad` was constructed before `scaled_disp2`.'],
-    explanation:
-      'The include-bias branch begins with ones. The notebook’s `quad` object omits bias, so its two columns are scaled displacement and its square.',
-  }),
-]
-
-const overfittingQuestions: MultipleChoiceQuestionSpec[] = [
-  notebookQuestion({
-    id: 'overfitting-split',
-    title: 'Read the Actual Train/Test Split',
-    prompt: 'Compare the prose near the split with the executable argument in the notebook.',
-    instructions: 'Answer from the displayed Python call, not from the nearby prose.',
-    datasetId: 'overfittingNotebook',
-    parts: [
-      part('split-fractions', 'What fractions does `test_size=0.8` request?', 'twenty-eighty', [
-        ['twenty-eighty', '20% training and 80% testing', 'The explicit size reserves 80% for the test arrays.'],
-        ['eighty-twenty', '80% training and 20% testing', 'That would use `test_size=0.2` or `train_size=0.8`.'],
-        ['eighty-eighty', '80% in both sets', 'The returned sets are disjoint.'],
-      ]),
-      part('repeatability', 'Why can the exact rows change between fresh notebook runs?', 'no-random-state', [
-        ['no-random-state', '`random_state` is not supplied', 'The split is not fixed by the call.'],
-        ['sorted-input', 'The input was sorted first', 'Sorting alone does not randomize or stabilize the random split.'],
-        ['test-large', 'The test set is larger', 'Its size does not determine repeatability.'],
-      ]),
-    ],
-    hints: ['The named argument describes the test arrays.', 'Look for a seed or `random_state` in the function call.'],
-    explanation:
-      'The executable code reserves 80% for testing even though the prose says 80/20 in the opposite direction. With no `random_state`, the membership is not reproducible across fresh runs.',
-  }),
-  notebookQuestion({
-    id: 'overfitting-preprocessing',
-    title: 'Avoid Preprocessing Leakage',
-    prompt: 'Trace which data determine the scaling statistics.',
-    instructions: 'Fitting learns parameters; transforming applies already learned parameters.',
-    datasetId: 'overfittingNotebook',
-    parts: [
-      part('scaler-fit', 'Which array is used in `disp_scaler.fit(...)`?', 'xtrain', [
-        ['xtrain', '`Xtrain` only', 'Only the training displacement values determine mean and scale.'],
-        ['xtest', '`Xtest` only', 'Test values are transformed but not used to fit.'],
-        ['all-disp', 'the complete `disp` array', 'That would leak test-distribution information into preprocessing.'],
-      ]),
-      part('same-scaler', 'Why is the fitted training scaler also used on Xtest?', 'same-coordinate-system', [
-        ['same-coordinate-system', 'To put train and test rows in the same learned coordinate system', 'The model expects features transformed with its training parameters.'],
-        ['force-zero-test-mean', 'To guarantee Xtest has mean zero', 'A test set need not have zero mean under training statistics.'],
-        ['increase-degree', 'To add polynomial columns', 'PolynomialFeatures performs that separate step.'],
-      ]),
-    ],
-    hints: ['Locate the single `.fit` call.', 'The test set should simulate future unseen observations.'],
-    explanation:
-      'The notebook correctly learns scaling parameters from Xtrain and reuses them for Xtest, preventing test-set information from influencing model preparation.',
-  }),
-  notebookQuestion({
-    id: 'overfitting-degree-eight',
-    title: 'Count Degree-Eight Features',
-    prompt: 'Read the polynomial and linear-model configuration together.',
-    instructions: '`PolynomialFeatures` counts the bias as degree zero.',
-    datasetId: 'overfittingNotebook',
-    parts: [
-      part('feature-count', 'How many columns does degree 8 produce with `include_bias=True` for one input feature?', 'nine-columns', [
-        ['nine-columns', '9 columns', 'The powers are 0 through 8.'],
-        ['eight-columns', '8 columns', 'This omits the requested bias column.'],
-        ['sixteen-columns', '16 columns', 'The train/test split does not double the feature count.'],
-      ]),
-      part('no-intercept', 'Why is `LinearRegression(fit_intercept=False)` paired with those features?', 'bias-is-intercept', [
-        ['bias-is-intercept', 'The power-zero column already represents an intercept', 'A separate fitted intercept would duplicate the constant term.'],
-        ['prevent-overfit', 'It guarantees the model cannot overfit', 'A degree-eight model can still overfit.'],
-        ['required-shape', 'The nine-column matrix otherwise has the wrong shape', 'The matrix shape is acceptable either way.'],
-      ]),
-    ],
-    hints: ['List powers beginning at zero.', 'A coefficient multiplying an all-ones column is a constant offset.'],
-    explanation:
-      'Including bias creates nine columns, with the first all ones. Setting `fit_intercept=False` avoids fitting a second constant term.',
-  }),
-  notebookQuestion({
-    id: 'overfitting-metrics-loop',
-    title: 'Audit the Metrics Loop',
-    prompt: 'Identify what the cell records and what happens if the notebook is run exactly as supplied.',
-    instructions: 'Names must have been defined or imported before Python can call them.',
-    datasetId: 'overfittingNotebook',
-    parts: [
-      part('first-failure', 'What happens at `poly_model = PolynomialRegression(d+1)` in this notebook?', 'name-error', [
-        ['name-error', 'A NameError occurs because `PolynomialRegression` is not defined or imported', 'The imports include `PolynomialFeatures`, not a `PolynomialRegression` class.'],
-        ['sklearn-model', 'It constructs sklearn LinearRegression automatically', 'Python does not infer this alias.'],
-        ['degree-error', 'It raises an error only when d reaches 8', 'The undefined name fails on the first iteration.'],
-      ]),
-      part('best-degree-rule', 'If the loop were made executable, which expression selects the degree with minimum test MSE?', 'test-argmin-plus-one', [
-        ['test-argmin-plus-one', '`metrics[:, 1].argmin() + 1`', 'Column 1 is test MSE and row 0 represents degree 1.'],
-        ['train-argmin', '`metrics[:, 0].argmin()`', 'This uses training MSE and returns a zero-based row.'],
-        ['test-argmax', '`metrics[:, 1].argmax() + 1`', 'The objective is to minimize MSE.'],
-      ]),
-    ],
-    hints: ['Search the earlier cells for a definition of `PolynomialRegression`.', 'Map row d to polynomial degree d + 1.'],
-    explanation:
-      'As supplied, the metrics loop cannot run because `PolynomialRegression` is undefined. Once a working model is substituted, the second metrics column is test MSE and its zero-based minimum position must be shifted by one to obtain the degree.',
-  }),
-]
 
 const gradientDescentQuestions: MultipleChoiceQuestionSpec[] = [
   notebookQuestion({
@@ -727,7 +545,7 @@ function assignment(input: {
 export const linearRegressionAssignment = assignment({
   id: 'linear-regression',
   version: 2,
-  displayNumber: 5,
+  displayNumber: 4,
   title: 'Linear Regression',
   topic: 'Regression',
   description:
@@ -736,31 +554,9 @@ export const linearRegressionAssignment = assignment({
   lab: linearRegressionNotebookLab,
 })
 
-export const polynomialRegressionAssignment = assignment({
-  id: 'polynomial-regression',
-  displayNumber: 6,
-  title: 'Polynomial Regression',
-  topic: 'Feature Engineering',
-  description:
-    'Trace scaling and polynomial feature construction, then connect engineered powers to nonlinear predictions.',
-  questions: polynomialRegressionQuestions,
-  lab: polynomialRegressionNotebookLab,
-})
-
-export const overfittingAssignment = assignment({
-  id: 'overfitting',
-  displayNumber: 7,
-  title: 'Overfitting',
-  topic: 'Model Evaluation',
-  description:
-    'Audit train/test preprocessing, polynomial complexity, and training-versus-testing error directly from the notebook.',
-  questions: overfittingQuestions,
-  lab: overfittingNotebookLab,
-})
-
 export const gradientDescentAssignment = assignment({
   id: 'gradient-descent',
-  displayNumber: 8,
+  displayNumber: 6,
   title: 'Gradient Descent',
   topic: 'Optimization',
   description:
@@ -771,7 +567,7 @@ export const gradientDescentAssignment = assignment({
 
 export const batchGradientDescentAssignment = assignment({
   id: 'batch-gradient-descent',
-  displayNumber: 9,
+  displayNumber: 7,
   title: 'Batch Gradient Descent',
   topic: 'Optimization',
   description:
@@ -782,7 +578,7 @@ export const batchGradientDescentAssignment = assignment({
 
 export const regularizationAssignment = assignment({
   id: 'regularization',
-  displayNumber: 10,
+  displayNumber: 8,
   title: 'Regularization',
   topic: 'Generalization',
   description:
@@ -793,7 +589,7 @@ export const regularizationAssignment = assignment({
 
 export const logisticRegressionAssignment = assignment({
   id: 'logistic-regression',
-  displayNumber: 11,
+  displayNumber: 9,
   title: 'Logistic Regression',
   topic: 'Binary Classification',
   description:
@@ -804,7 +600,7 @@ export const logisticRegressionAssignment = assignment({
 
 export const softmaxAssignment = assignment({
   id: 'softmax',
-  displayNumber: 12,
+  displayNumber: 10,
   title: 'Softmax',
   topic: 'Multiclass Classification',
   description:
@@ -816,7 +612,6 @@ export const softmaxAssignment = assignment({
 export const notebookAssignments = [
   linearRegressionAssignment,
   polynomialRegressionAssignment,
-  overfittingAssignment,
   gradientDescentAssignment,
   batchGradientDescentAssignment,
   regularizationAssignment,

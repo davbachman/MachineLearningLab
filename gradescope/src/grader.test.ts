@@ -59,7 +59,7 @@ describe('Gradescope grader', () => {
   })
 
   it('awards exactly 100 points to a canonical export for every published assignment', () => {
-    expect(publishedAssignments).toHaveLength(12)
+    expect(publishedAssignments).toHaveLength(11)
 
     for (const assignment of publishedAssignments) {
       const results = gradeSubmission(
@@ -74,6 +74,26 @@ describe('Gradescope grader', () => {
       ).toBeCloseTo(100, 10)
       expect(results.tests.every((test) => test.status === 'passed'), assignment.id).toBe(true)
     }
+  })
+
+  it('grades one saved checkpoint of the combined polynomial lab independently', () => {
+    const assignment = publishedAssignments.find(a => a.id === 'polynomial-regression')!
+    const submission = createReferenceSubmission(assignment)
+    const index = assignment.questions.findIndex(q => q.id === 'polynomial-evaluation-notebook-lab')
+    const question = assignment.questions[index]
+    if (question.kind !== 'codeLab') throw new Error('Expected notebook lab')
+    submission.questions.forEach(q => { q.latestAnswer = null; q.attemptHistory = []; q.status = 'gave_up' })
+    const stage = question.stages[0]
+    const field = stage.fields[0]
+    submission.questions[index].latestAnswer = {
+      formatVersion: 1, questionId: question.id, variantId: question.variantId,
+      stages: { [stage.id]: { [field.id]: field.correctOptionId } },
+    }
+    const result = gradeSubmission(configFor(assignment), submission)
+    expect(result.score).toBeCloseTo(100 / 7 / 10, 2)
+    expect(result.tests.filter(t => t.status === 'passed')).toHaveLength(1)
+    submission.assignmentVersion = 1
+    expect(gradeSubmission(configFor(assignment), submission).tests[0].name).toBe('Submission validation')
   })
 
   it('grades raw answers instead of trusting exported status and outcome fields', () => {

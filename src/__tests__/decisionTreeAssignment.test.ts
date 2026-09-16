@@ -20,7 +20,6 @@ describe('decisionTreeAssignment', () => {
       'knn',
       'linear-regression',
       'polynomial-regression',
-      'overfitting',
       'gradient-descent',
       'batch-gradient-descent',
       'regularization',

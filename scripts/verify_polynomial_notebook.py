@@ -40,8 +40,9 @@ const server = await createServer({ server: { middlewareMode: true }, logLevel: 
 try {
  const labs = await server.ssrLoadModule('/src/data/regressionCodeLabQuestions.ts');
  const visuals = await server.ssrLoadModule('/src/data/polynomialVisualData.ts');
+ const degrees = await server.ssrLoadModule('/src/data/polynomialDegreeData.ts');
  process.stdout.write(JSON.stringify({ feature: labs.polynomialRegressionNotebookLab,
-   evaluation: labs.polynomialEvaluationNotebookLab, visuals }));
+   evaluation: labs.polynomialEvaluationNotebookLab, visuals, degrees }));
 } finally { await server.close(); }
 """
 payload = json.loads(subprocess.check_output(["node", "--input-type=module", "-e", node], cwd=root, text=True))
@@ -53,6 +54,20 @@ for model in payload["visuals"]["polynomialExampleModels"]:
     assert np.allclose(fitted, model["coefficients"], atol=1e-5)
     errors[model["name"]] = np.mean((np.polynomial.polynomial.polyval(points[:, 0], fitted) - points[:, 1])**2)
 assert errors["C"] < errors["A"] < errors["B"]
+
+# Independently refit every slider model without touching the held-out observations.
+degree_data = payload["degrees"]
+train = np.array(degree_data["trainingPoints"])
+validation = np.array(degree_data["validationPoints"])
+slider_errors = []
+for degree, coefficients in enumerate(degree_data["degreeCoefficients"], start=1):
+    fitted = np.polynomial.polynomial.polyfit(train[:, 0], train[:, 1], degree)
+    assert np.allclose(fitted, coefficients, atol=1e-9)
+    slider_errors.append([np.mean((np.polynomial.polynomial.polyval(data[:, 0], fitted) - data[:, 1])**2)
+                          for data in (train, validation)])
+    curve = np.polynomial.polynomial.polyval(np.linspace(-2, 2, 401), fitted)
+    assert curve.min() >= 0 and curve.max() <= 5, "Fixed plot axes must include the entire curve"
+assert np.array(slider_errors).argmin(axis=0).tolist() == [7, 1]
 
 def chosen(stage):
     field = stage["fields"][0]

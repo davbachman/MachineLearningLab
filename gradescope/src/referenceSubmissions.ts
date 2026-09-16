@@ -1,4 +1,5 @@
 import { assignmentsById, publishedAssignments } from '../../src/data/assignments'
+import { bestPolynomialDegree } from '../../src/data/polynomialDegreeData'
 import { kmeansInteractiveDatasets } from '../../src/data/kmeansDatasets'
 import { fitLeastSquaresLine, fitLeastSquaresPlane } from '../../src/lib/linearRegression'
 import { knnInteractiveDatasets } from '../../src/data/knnDatasets'
@@ -353,6 +354,8 @@ function knnPhases(question: Extract<QuestionSpec, { kind: 'knn2d' }>): Referenc
 
 function phasesForQuestion(question: QuestionSpec): ReferencePhase[] {
   switch (question.kind) {
+    case 'polynomialDegree':
+      return [{ answer: { degree: bestPolynomialDegree(question.target) } }]
     case 'linearFit':
       return [{ answer: fitLeastSquaresLine(question.points) }]
     case 'planeFit':

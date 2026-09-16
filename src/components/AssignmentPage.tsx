@@ -19,6 +19,7 @@ import { Knn2DQuestion } from './questions/Knn2DQuestion'
 import { MultipleChoiceQuestion } from './questions/MultipleChoiceQuestion'
 import { Pca2DQuestion } from './questions/Pca2DQuestion'
 import { LinearFitQuestion } from './questions/LinearFitQuestion'
+import { PolynomialDegreeQuestion } from './questions/PolynomialDegreeQuestion'
 import { TableEntryQuestion } from './questions/TableEntryQuestion'
 import { CodeLabQuestion } from './questions/CodeLabQuestion'
 import type { CodeLabSubmission } from '../lib/codeLab'
@@ -166,6 +167,11 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
           </aside>
 
           <section className="question-strip">
+            {currentQuestion.kind === 'polynomialDegree' ? (
+              <PolynomialDegreeQuestion key={currentQuestion.id} question={currentQuestion} state={currentQuestionState}
+                questionNumber={activeViewIndex + 1} totalQuestions={assignment.questions.length}
+                hints={hints} onAttempt={handleAttempt} />
+            ) : null}
             {currentQuestion.kind === 'planeFit' ? (
               <Suspense fallback={<p>Loading the 3D regression scene…</p>}>
                 <PlaneFitQuestion key={currentQuestion.id} question={currentQuestion} state={currentQuestionState}

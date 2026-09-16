@@ -112,7 +112,7 @@ export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
   },
   polynomialErrors: {
     id: 'polynomialErrors', kind: 'regressionVisual', mode: 'errors',
-    caption: 'Car displacement/MPG results from the combined notebook. Teal circles show training MSE; orange squares show validation MSE. Smaller is better.',
+    caption: 'A separate car displacement/MPG experiment. Teal circles show training MSE; orange squares show validation MSE. Smaller is better.',
   },
   polynomialFeatureTrace: {
     id: 'polynomialFeatureTrace', kind: 'table', title: 'Scaled inputs',

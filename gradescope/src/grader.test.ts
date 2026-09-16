@@ -76,6 +76,21 @@ describe('Gradescope grader', () => {
     }
   })
 
+  it('grades degree selections independently and ignores claimed MSE readouts', () => {
+    const assignment = publishedAssignments.find(a => a.id === 'polynomial-regression')!
+    const submission = createReferenceSubmission(assignment)
+    submission.questions.forEach(q => { q.latestAnswer = null; q.attemptHistory = []; q.status = 'gave_up' })
+    const training = assignment.questions.findIndex(q => q.id === 'polynomial-training-degree')
+    const validation = assignment.questions.findIndex(q => q.id === 'polynomial-validation-degree')
+    submission.questions[training].latestAnswer = { degree: 8 }
+    submission.questions[validation].latestAnswer = { degree: 8, validationMse: 0 }
+    expect(gradeSubmission(configFor(assignment), submission).score).toBeCloseTo(100 / 7, 2)
+    submission.questions[validation].latestAnswer = { degree: 2 }
+    expect(gradeSubmission(configFor(assignment), submission).score).toBeCloseTo(200 / 7, 2)
+    submission.assignmentVersion = 2
+    expect(gradeSubmission(configFor(assignment), submission).tests[0].name).toBe('Submission validation')
+  })
+
   it('grades one saved checkpoint of the combined polynomial lab independently', () => {
     const assignment = publishedAssignments.find(a => a.id === 'polynomial-regression')!
     const submission = createReferenceSubmission(assignment)

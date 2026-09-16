@@ -1,14 +1,15 @@
 import type { AssignmentSpec, MultipleChoiceQuestionSpec } from '../types'
+import { polynomialDegreeQuestion } from './polynomialDegreeData'
 import { validateMultipleChoiceSelections } from '../lib/questionValidation'
 import { polynomialRegressionNotebookLab, polynomialEvaluationNotebookLab } from './regressionCodeLabQuestions'
 
 function question(input: Omit<MultipleChoiceQuestionSpec, 'kind' | 'validator' | 'hintSchedule'>): MultipleChoiceQuestionSpec {
   return { ...input, kind: 'multipleChoice', hintSchedule: [2, 4],
-    validator: validateMultipleChoiceSelections(Object.fromEntries(input.parts.map(p => [p.id, p.correctOptionId])), 'Check each selection against the displayed data and the notebook implementation.') }
+    validator: validateMultipleChoiceSelections(Object.fromEntries(input.parts.map(p => [p.id, p.correctOptionId])), 'Check each selection against the displayed data and the question instructions.') }
 }
 
 export const polynomialRegressionAssignment: AssignmentSpec = {
-  id: 'polynomial-regression', version: 2, displayNumber: 5, published: true,
+  id: 'polynomial-regression', version: 3, displayNumber: 5, published: true,
   title: 'Polynomial Regression and Overfitting', topic: 'Model Flexibility and Generalization',
   description: 'Build polynomial features with from-scratch classes, compare training and validation errors, and trace the combined notebook one calculation at a time.',
   questions: [
@@ -25,46 +26,14 @@ export const polynomialRegressionAssignment: AssignmentSpec = {
         { id: 'always', title: 'Every curve with visible wiggles must be overfitting.', description: '' },
       ] }],
       hints: ['Degree 1 means a straight line in the original input.', 'Training fit and prediction on unseen observations answer different questions.'],
-      reveal: { explanation: 'B is degree 1, A is degree 2, and C is degree 8. The more flexible model can follow training-specific detail. The next error-curve problem supplies the held-out evidence needed to judge generalization.' },
+      reveal: { explanation: 'B is degree 1, A is degree 2, and C is degree 8. The more flexible model can follow training-specific detail. The next two problems supply held-out data so you can compare training fit and generalization.' },
     }),
-    question({
-      id: 'polynomial-powers', title: 'Turn One Feature into Several',
-      prompt: 'Construct polynomial features from a one-dimensional array of scaled inputs.',
-      instructions: 'Use the from-scratch PolynomialFeatures class in 5PolynomialRegression.ipynb. Observations remain rows.',
-      datasetId: 'polynomialFeatureTrace',
-      parts: [{ id: 'row', prompt: 'What is the first row when degree=3 and include_bias=False?', correctOptionId: 'powers', options: [
-        { id: 'powers', title: '[-2, 4, -8]', description: '' },
-        { id: 'bias', title: '[1, -2, 4]', description: '' },
-        { id: 'cube', title: '[-8]', description: '' },
-      ] }, { id: 'shape', prompt: 'For all four observations, what is the feature-matrix shape when degree=3 and include_bias=True?', correctOptionId: 'four-four', options: [
-        { id: 'four-four', title: '(4, 4)', description: '' },
-        { id: 'four-three', title: '(4, 3)', description: '' },
-        { id: 'three-four', title: '(3, 4)', description: '' },
-      ] }],
-      hints: ['List the powers starting at one when bias is absent.', 'Including bias adds the power-zero column.'],
-      reveal: { explanation: 'For -2, powers one through three are -2, 4, and -8. With bias, four rows each contain powers zero through three, giving shape (4, 4).' },
-    }),
-    question({
-      id: 'polynomial-normal-equation', title: 'Same Solver, Different Features',
-      prompt: 'The fitted function can be curved even though we still use LinearRegression from Homework 4.',
-      instructions: 'The custom model adds a column of ones internally. It does not have a fit_intercept argument.',
-      datasetId: 'polynomialModelReference',
-      parts: [{ id: 'linear', prompt: 'In what sense is this still a linear model?', correctOptionId: 'coefficients', options: [
-        { id: 'coefficients', title: 'Predictions are linear in the fitted coefficients, not necessarily in x.', description: '' },
-        { id: 'straight', title: 'Predictions must form a straight line in x.', description: '' },
-        { id: 'loss', title: 'The squared-error loss has been replaced with a linear loss.', description: '' },
-      ] }, { id: 'bias', prompt: 'Why does the notebook use include_bias=False when fitting this custom LinearRegression?', correctOptionId: 'duplicate', options: [
-        { id: 'duplicate', title: 'A bias feature would duplicate the ones column already added inside fit.', description: '' },
-        { id: 'no-offset', title: 'The model must have intercept zero.', description: '' },
-        { id: 'overfit-proof', title: 'Removing the bias guarantees that high-degree models cannot overfit.', description: '' },
-      ] }],
-      hints: ['Treat x and x² as two already-computed input columns.', 'Two identical columns are linearly dependent.'],
-      reveal: { explanation: 'Polynomial regression is least squares on engineered powers. Adding the constant feature twice makes Xnew.T @ Xnew singular; the custom model already supplies one intercept column.' },
-    }),
+    polynomialDegreeQuestion('training'),
+    polynomialDegreeQuestion('validation'),
     question({
       id: 'polynomial-validation-curve', title: 'Read the Generalization Curve',
       prompt: 'Compare training and validation MSE as polynomial degree increases.',
-      instructions: 'These rounded values come from the combined notebook with random_state=42. All degrees use the same split and training-fitted scaler. The table supplies precise values for close points.',
+      instructions: 'This is a separate experiment predicting car MPG from displacement, not the small dataset in Questions 1–3. All degrees use the same split and training-fitted scaler. Use the plot and table below; no code is needed.',
       datasetId: 'polynomialErrors',
       parts: [{ id: 'degree', prompt: 'Which degree would you choose by minimum validation MSE?', correctOptionId: 'four', options: [
         { id: 'four', title: '4', description: '' }, { id: 'eight', title: '8', description: '' }, { id: 'one', title: '1', description: '' },
@@ -79,7 +48,7 @@ export const polynomialRegressionAssignment: AssignmentSpec = {
     question({
       id: 'polynomial-evaluation', title: 'Keep Evaluation Honest',
       prompt: 'Distinguish fitting, degree selection, and final evaluation.',
-      instructions: 'The notebook reserves 20% for validation and fits the scaler and every model on the training set only.',
+      instructions: 'An experiment reserves 20% of the data for validation and fits the scaler and every model on the training set only.',
       datasetId: 'polynomialEvaluationReference',
       parts: [{ id: 'scaler', prompt: 'How should validation inputs be scaled?', correctOptionId: 'training', options: [
         { id: 'training', title: 'Use the mean and standard deviation learned from Xtrain.', description: '' },

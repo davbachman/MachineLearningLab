@@ -20,6 +20,7 @@ export type QuestionKind =
   | 'codeLab'
   | 'linearFit'
   | 'planeFit'
+  | 'polynomialDegree'
 export type QuestionStatus = 'locked' | 'active' | 'correct' | 'gave_up'
 export type AttemptOutcome = 'incorrect' | 'progress' | 'correct'
 
@@ -157,7 +158,13 @@ export interface PlaneFitQuestionSpec extends BaseQuestionSpec<'planeFit'> {
   rssToleranceRatio: number
 }
 
+export interface PolynomialDegreeQuestionSpec extends BaseQuestionSpec<'polynomialDegree'> {
+  target: 'training' | 'validation'
+  initialDegree: number
+}
+
 export type QuestionSpec =
+  | PolynomialDegreeQuestionSpec
   | PlaneFitQuestionSpec
   | LinearFitQuestionSpec
   | Pca2DLineQuestionSpec

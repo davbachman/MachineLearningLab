@@ -53,7 +53,7 @@ describe('notebook-backed assignments', () => {
     for (const [assignment, displayNumber, filename] of expectedAssignments) {
       expect(assignment.published).toBe(true)
       expect(assignment.displayNumber).toBe(displayNumber)
-      expect(assignment.questions.map((question) => question.kind)).toEqual(assignment.id === 'linear-regression' ? ['linearFit', 'planeFit', 'codeLab'] : assignment.id === 'polynomial-regression' ? ['multipleChoice', 'multipleChoice', 'multipleChoice', 'multipleChoice', 'multipleChoice', 'codeLab', 'codeLab'] : [
+      expect(assignment.questions.map((question) => question.kind)).toEqual(assignment.id === 'linear-regression' ? ['linearFit', 'planeFit', 'codeLab'] : assignment.id === 'polynomial-regression' ? ['multipleChoice', 'polynomialDegree', 'polynomialDegree', 'multipleChoice', 'multipleChoice', 'codeLab', 'codeLab'] : [
         'multipleChoice',
         'multipleChoice',
         'multipleChoice',
@@ -68,6 +68,11 @@ describe('notebook-backed assignments', () => {
   it('accepts the fixed answer IDs and rejects a changed answer in every question', () => {
     for (const assignment of notebookAssignments) {
       for (const question of assignment.questions) {
+        if (question.kind === 'polynomialDegree') {
+          expect(question.validator({ degree: question.target === 'training' ? 8 : 2 }).correct).toBe(true)
+          expect(question.validator({ degree: 1 }).correct).toBe(false)
+          continue
+        }
         if (question.kind === 'planeFit') {
           expect(question.validator(fitLeastSquaresPlane(question.points)).correct).toBe(true)
           expect(question.validator(question.initialCoefficients).correct).toBe(false)
@@ -113,7 +118,7 @@ describe('notebook-backed assignments', () => {
   })
 
   it('combines polynomial regression and overfitting with visual warmups and short notebook checkpoints', () => {
-    expect(polynomialRegressionAssignment.version).toBe(2)
+    expect(polynomialRegressionAssignment.version).toBe(3)
     expect(polynomialRegressionAssignment.title).toBe('Polynomial Regression and Overfitting')
     expect(notebookAssignments.some(a => a.id === 'overfitting')).toBe(false)
     expect(polynomialRegressionAssignment.questions[0].datasetId).toBe('polynomialCurves')

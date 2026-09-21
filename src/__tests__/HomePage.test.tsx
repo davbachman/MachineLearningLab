@@ -28,7 +28,9 @@ describe('HomePage', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
+    const headings = screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)
+    expect(headings).toHaveLength(26)
+    expect(headings.slice(0, 11)).toEqual([
       '0. Numpy',
       '1. Principal Component Analysis',
       '2. K-means Clustering',
@@ -41,6 +43,7 @@ describe('HomePage', () => {
       '9. Logistic Regression',
       '10. Softmax',
     ])
+    headings.slice(11).forEach((title, index) => expect(title).toMatch(new RegExp(`^${index + 11}\\. .+`)))
   })
 
   it('allows every untouched assignment to be downloaded', () => {

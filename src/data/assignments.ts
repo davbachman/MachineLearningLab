@@ -7,6 +7,7 @@ import { numpyAssignment } from './numpyAssignment'
 import { pcaAssignment } from './pcaAssignment'
 import { randomForestAssignment } from './randomForestAssignment'
 import { notebookAssignments } from './notebookAssignments'
+import { advancedAssignments } from './advancedAssignments'
 
 export const assignmentRegistry: AssignmentSpec[] = [
   numpyAssignment,
@@ -16,6 +17,7 @@ export const assignmentRegistry: AssignmentSpec[] = [
   decisionTreeAssignment,
   randomForestAssignment,
   ...notebookAssignments,
+  ...advancedAssignments,
 ].map(withBalancedChoiceOrder)
 
 export const publishedAssignments = assignmentRegistry.filter((assignment) => assignment.published)

@@ -13,7 +13,7 @@ describe('decisionTreeAssignment', () => {
     expect(decisionTreeAssignment.questions.map((question) => question.id)).toEqual(
       expect.arrayContaining(['dt-visual-axis-split', 'dt-visual-depth-two']),
     )
-    expect(publishedAssignments.map((assignment) => assignment.id)).toEqual([
+    expect(publishedAssignments.slice(0, 11).map((assignment) => assignment.id)).toEqual([
       'numpy',
       'pca',
       'kmeans',
@@ -26,6 +26,7 @@ describe('decisionTreeAssignment', () => {
       'logistic-regression',
       'softmax',
     ])
+    expect(publishedAssignments.some(a => ['decision-trees', 'random-forests'].includes(a.id))).toBe(false)
   })
 
   it('accepts the warm-up Gini values and rejects swapped impurity answers', () => {

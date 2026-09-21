@@ -29,7 +29,7 @@ describe('homework numbering', () => {
       }
       for (const match of source.matchAll(/\bHomework (\d+)\b/g)) expect(+match[1],filename).toBeLessThanOrEqual(25)
     }
-    expect(publishedAssignments.map(a => a.displayNumber)).toEqual(Array.from({length:11}, (_,i)=>i))
+    expect(publishedAssignments.map(a => a.displayNumber)).toEqual(Array.from({length:26}, (_,i)=>i))
     for (const assignment of publishedAssignments) {
       for (const q of assignment.questions.filter(q => q.kind === 'codeLab')) {
         for (const match of q.prompt.matchAll(/\b\d+[a-z]?[A-Z][A-Za-z0-9]*\.ipynb\b/g)) {

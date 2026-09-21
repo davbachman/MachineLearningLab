@@ -6,6 +6,9 @@ import { BatchGradientVisual } from './BatchGradientVisual'
 import { RegularizationVisual } from './RegularizationVisual'
 import { LogisticVisual } from './LogisticVisual'
 import { SoftmaxVisual } from './SoftmaxVisual'
+import { NeuralFoundationsVisual } from './NeuralFoundationsVisual'
+import { SequenceFoundationsVisual } from './SequenceFoundationsVisual'
+import { TransformerInterpretabilityVisual } from './TransformerInterpretabilityVisual'
 import type {
   AttemptOutcome,
   MultipleChoiceQuestionSpec,
@@ -193,6 +196,9 @@ function DatasetPanel({
   if (dataset.kind === 'regularizationVisual') return <RegularizationVisual dataset={dataset} />
   if (dataset.kind === 'logisticVisual') return <LogisticVisual dataset={dataset} />
   if (dataset.kind === 'softmaxVisual') return <SoftmaxVisual dataset={dataset} />
+  if (dataset.kind === 'neuralFoundationsVisual') return <NeuralFoundationsVisual dataset={dataset} />
+  if (dataset.kind === 'sequenceFoundationsVisual') return <SequenceFoundationsVisual dataset={dataset} />
+  if (dataset.kind === 'transformerInterpretabilityVisual') return <TransformerInterpretabilityVisual dataset={dataset} />
   if (dataset.kind === 'table') {
     const tableDataset = dataset as MultipleChoiceTableDataset
     return (
@@ -340,7 +346,7 @@ export function MultipleChoiceQuestion({
         </button>
       }
     >
-      <div className="table-shell" style={dataset.kind === 'gradientVisual' || dataset.kind === 'batchGradientVisual' || dataset.kind === 'regularizationVisual' || dataset.kind === 'logisticVisual' || dataset.kind === 'softmaxVisual' || (dataset.kind === 'regressionVisual' && dataset.mode === 'curves') ? { gridTemplateColumns: '1fr' } : undefined}>
+      <div className="table-shell" style={dataset.kind === 'neuralFoundationsVisual' || dataset.kind === 'sequenceFoundationsVisual' || dataset.kind === 'transformerInterpretabilityVisual' || dataset.kind === 'gradientVisual' || dataset.kind === 'batchGradientVisual' || dataset.kind === 'regularizationVisual' || dataset.kind === 'logisticVisual' || dataset.kind === 'softmaxVisual' || (dataset.kind === 'regressionVisual' && dataset.mode === 'curves') ? { gridTemplateColumns: '1fr' } : undefined}>
         <DatasetPanel dataset={dataset} resolved={showComparison} />
 
         <section className="answer-panel">

@@ -98,7 +98,7 @@ describe('Gradescope grader', () => {
   })
 
   it('awards exactly 100 points to a canonical export for every published assignment', () => {
-    expect(publishedAssignments).toHaveLength(11)
+    expect(publishedAssignments).toHaveLength(26)
 
     for (const assignment of publishedAssignments) {
       const results = gradeSubmission(

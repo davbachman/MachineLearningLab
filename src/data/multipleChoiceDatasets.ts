@@ -4,6 +4,9 @@ import { batchGradientVisualDatasets, type BatchGradientVisualDataset } from './
 import { regularizationVisualDatasets, type RegularizationVisualDataset } from './regularizationAssignment'
 import { logisticVisualDatasets, type LogisticVisualDataset } from './logisticAssignment'
 import { softmaxVisualDatasets, type SoftmaxVisualDataset } from './softmaxAssignment'
+import { neuralFoundationsVisualDatasets, type NeuralFoundationsVisualDataset } from './neuralFoundationsAssignments'
+import { sequenceFoundationsVisualDatasets, type SequenceFoundationsVisualDataset } from './sequenceFoundationsAssignments'
+import { transformerInterpretabilityVisualDatasets, type TransformerInterpretabilityVisualDataset } from './transformerInterpretabilityAssignments'
 
 export interface MultipleChoiceTableDataset {
   id: string
@@ -54,6 +57,9 @@ export interface RegressionVisualDataset {
 }
 
 export type MultipleChoiceDataset =
+  | NeuralFoundationsVisualDataset
+  | SequenceFoundationsVisualDataset
+  | TransformerInterpretabilityVisualDataset
   | BatchGradientVisualDataset
   | RegularizationVisualDataset
   | LogisticVisualDataset
@@ -122,6 +128,9 @@ const metricPoints: Vec2[] = [
 ]
 
 export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
+  ...neuralFoundationsVisualDatasets,
+  ...sequenceFoundationsVisualDatasets,
+  ...transformerInterpretabilityVisualDatasets,
   ...batchGradientVisualDatasets,
   ...regularizationVisualDatasets,
   ...logisticVisualDatasets,

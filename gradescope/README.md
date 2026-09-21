@@ -81,6 +81,30 @@ Homework 7 (Batch Gradient Descent), 8 (Regularization), 9 (Logistic Regression)
 
 Upload the newly rebuilt `batch-gradient-descent.zip`, `regularization.zip`, `logistic-regression.zip`, and `softmax.zip` from `gradescope/dist/` when publishing these assignments. Each package also supports its original version-1 questions with the preserved answer key, so previously exported submissions do not need their version tags changed. Current question counts are 6, 6, 5, and 6 respectively; each question receives an equal share of 100 points, with independent parts and notebook fields receiving partial credit.
 
+## Neural networks through feature steering: Homework 11–25
+
+Each new module is version 1. Self-contained conceptual warm-ups precede a notebook lab with short, independently graded checkpoints. The supplied notebooks are unchanged. Visual controls explore deterministic examples; scored multiple-choice questions state their reference conditions. The labs use supplied inputs, tensor shapes, and exact code behavior rather than requiring a particular random initialization, trained accuracy, generated passage, or locally trained SAE feature ID.
+
+| Homework | Notebook | Upload-ready package |
+| --- | --- | --- |
+| 11 | `11MLPs.ipynb` | `mlps.zip` |
+| 12 | `12AutoGrad.ipynb` | `autograd.zip` |
+| 13 | `13PyTorch.ipynb` | `pytorch.zip` |
+| 14 | `14Optimizers.ipynb` | `optimizers.zip` |
+| 15 | `15Convolutions.ipynb` | `convolutions.zip` |
+| 16 | `16CNNs.ipynb` | `cnns.zip` |
+| 17 | `17AutoEncoders.ipynb` | `autoencoders.zip` |
+| 18 | `18Tokenization.ipynb` | `tokenization.zip` |
+| 19 | `19Attention.ipynb` | `attention.zip` |
+| 20 | `20CausalAttention.ipynb` | `causal-attention.zip` |
+| 21 | `21PicoGPT.ipynb` | `pico-gpt.zip` |
+| 22 | `22TrainingPicoGPT.ipynb` | `training-pico-gpt.zip` |
+| 23 | `23TransformerActivations.ipynb` | `transformer-activations.zip` |
+| 24 | `24SparseAutoencoders.ipynb` | `sparse-autoencoders.zip` |
+| 25 | `25FeatureSteering.ipynb` | `feature-steering.zip` |
+
+All packages are in `gradescope/dist/`. Create matching Gradescope assignments and upload the individual ZIPs; publishing the app does not install autograders. No PyTorch runtime, GPU, notebook execution, network access, or model API is required for grading these app exports. Questions and lab fields receive the same independent partial-credit treatment as earlier assignments. See [notebook alignment notes](../docs/advanced-module-notes.md) for discrepancies in the original course notebooks that the app deliberately does not silently fix.
+
 ## Local runner paths
 
 On Gradescope, the runner uses the official paths:

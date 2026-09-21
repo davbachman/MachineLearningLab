@@ -5,6 +5,7 @@ export default defineConfig({
     environment: 'node',
     include: [
       'gradescope/src/grader.test.ts',
+      'gradescope/src/advancedAssignments.test.ts',
       'gradescope/src/grader.bundle.integration.ts',
     ],
   },

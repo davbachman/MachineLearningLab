@@ -20,6 +20,7 @@ import { MultipleChoiceQuestion } from './questions/MultipleChoiceQuestion'
 import { Pca2DQuestion } from './questions/Pca2DQuestion'
 import { LinearFitQuestion } from './questions/LinearFitQuestion'
 import { PolynomialDegreeQuestion } from './questions/PolynomialDegreeQuestion'
+import { GradientDescentQuestion } from './questions/GradientDescentQuestion'
 import { TableEntryQuestion } from './questions/TableEntryQuestion'
 import { CodeLabQuestion } from './questions/CodeLabQuestion'
 import type { CodeLabSubmission } from '../lib/codeLab'
@@ -167,6 +168,11 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
           </aside>
 
           <section className="question-strip">
+            {currentQuestion.kind === 'gradientDescent' ? (
+              <GradientDescentQuestion key={currentQuestion.id} question={currentQuestion} state={currentQuestionState}
+                questionNumber={activeViewIndex + 1} totalQuestions={assignment.questions.length}
+                hints={hints} onAttempt={handleAttempt} />
+            ) : null}
             {currentQuestion.kind === 'polynomialDegree' ? (
               <PolynomialDegreeQuestion key={currentQuestion.id} question={currentQuestion} state={currentQuestionState}
                 questionNumber={activeViewIndex + 1} totalQuestions={assignment.questions.length}

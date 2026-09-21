@@ -21,6 +21,7 @@ export type QuestionKind =
   | 'linearFit'
   | 'planeFit'
   | 'polynomialDegree'
+  | 'gradientDescent'
 export type QuestionStatus = 'locked' | 'active' | 'correct' | 'gave_up'
 export type AttemptOutcome = 'incorrect' | 'progress' | 'correct'
 
@@ -164,6 +165,7 @@ export interface PolynomialDegreeQuestionSpec extends BaseQuestionSpec<'polynomi
 }
 
 export type QuestionSpec =
+  | GradientDescentQuestionSpec
   | PolynomialDegreeQuestionSpec
   | PlaneFitQuestionSpec
   | LinearFitQuestionSpec
@@ -176,6 +178,10 @@ export type QuestionSpec =
   | RandomForestQuestionSpec
   | TableEntryQuestionSpec
   | CodeLabQuestionSpec
+
+export interface GradientDescentQuestionSpec extends BaseQuestionSpec<'gradientDescent'> {
+  initialLearningRate: number
+}
 
 export interface AssignmentSpec {
   id: string

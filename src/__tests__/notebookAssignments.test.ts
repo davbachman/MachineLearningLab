@@ -53,7 +53,7 @@ describe('notebook-backed assignments', () => {
     for (const [assignment, displayNumber, filename] of expectedAssignments) {
       expect(assignment.published).toBe(true)
       expect(assignment.displayNumber).toBe(displayNumber)
-      expect(assignment.questions.map((question) => question.kind)).toEqual(assignment.id === 'linear-regression' ? ['linearFit', 'planeFit', 'codeLab'] : assignment.id === 'polynomial-regression' ? ['multipleChoice', 'polynomialDegree', 'polynomialDegree', 'multipleChoice', 'multipleChoice', 'codeLab', 'codeLab'] : [
+      expect(assignment.questions.map((question) => question.kind)).toEqual(assignment.id === 'linear-regression' ? ['linearFit', 'planeFit', 'codeLab'] : assignment.id === 'polynomial-regression' ? ['multipleChoice', 'polynomialDegree', 'polynomialDegree', 'multipleChoice', 'multipleChoice', 'codeLab', 'codeLab'] : assignment.id === 'gradient-descent' ? ['multipleChoice', 'multipleChoice', 'gradientDescent', 'multipleChoice', 'multipleChoice', 'codeLab'] : [
         'multipleChoice',
         'multipleChoice',
         'multipleChoice',
@@ -68,6 +68,11 @@ describe('notebook-backed assignments', () => {
   it('accepts the fixed answer IDs and rejects a changed answer in every question', () => {
     for (const assignment of notebookAssignments) {
       for (const question of assignment.questions) {
+        if (question.kind === 'gradientDescent') {
+          expect(question.validator({ learningRate: 0.12 }).correct).toBe(true)
+          expect(question.validator({ learningRate: question.initialLearningRate }).correct).toBe(false)
+          continue
+        }
         if (question.kind === 'polynomialDegree') {
           expect(question.validator({ degree: question.target === 'training' ? 8 : 2 }).correct).toBe(true)
           expect(question.validator({ degree: 1 }).correct).toBe(false)

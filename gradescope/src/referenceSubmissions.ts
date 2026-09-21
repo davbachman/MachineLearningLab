@@ -354,6 +354,8 @@ function knnPhases(question: Extract<QuestionSpec, { kind: 'knn2d' }>): Referenc
 
 function phasesForQuestion(question: QuestionSpec): ReferencePhase[] {
   switch (question.kind) {
+    case 'gradientDescent':
+      return [{ answer: { learningRate: 0.12 } }]
     case 'polynomialDegree':
       return [{ answer: { degree: bestPolynomialDegree(question.target) } }]
     case 'linearFit':

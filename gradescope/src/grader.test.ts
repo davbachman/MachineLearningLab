@@ -4,6 +4,7 @@ import type { JsonValue, SubmissionExport } from '../../src/types'
 import { gradeSubmission } from './grader'
 import { createReferenceSubmission } from './referenceSubmissions'
 import { kmeansVersion6Assignment } from './assignmentVersions'
+import { gradientDescentVersion1Assignment } from './gradientDescentVersion1'
 
 function cloneSubmission(submission: SubmissionExport): SubmissionExport {
   return JSON.parse(JSON.stringify(submission)) as SubmissionExport
@@ -17,6 +18,18 @@ function configFor(assignment: (typeof publishedAssignments)[number]) {
 }
 
 describe('Gradescope grader', () => {
+  it('grades both gradient-descent versions and recomputes learning-rate success from raw answers', () => {
+    const assignment = publishedAssignments.find(a => a.id === 'gradient-descent')!
+    expect(assignment.questions).toHaveLength(6)
+    expect(gradeSubmission(configFor(assignment), createReferenceSubmission(gradientDescentVersion1Assignment)).score).toBe(100)
+    const submission = createReferenceSubmission(assignment)
+    submission.questions.forEach(q => { q.latestAnswer=null; q.attemptHistory=[]; q.status='gave_up' })
+    const index=assignment.questions.findIndex(q=>q.id==='gradient-learning-rate')
+    submission.questions[index].latestAnswer={learningRate:.12}
+    expect(gradeSubmission(configFor(assignment),submission).score).toBeCloseTo(100/6,2)
+    submission.questions[index].latestAnswer={learningRate:.3,finalLoss:1,finalParameters:[1,-1],steps:0}
+    expect(gradeSubmission(configFor(assignment),submission).score).toBe(0)
+  })
   it('grades both K-means versions with their own phase counts and answer keys', () => {
     const current = publishedAssignments.find((assignment) => assignment.id === 'kmeans')!
     const oldSubmission = createReferenceSubmission(kmeansVersion6Assignment)

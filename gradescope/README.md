@@ -69,6 +69,12 @@ K-NN is Homework 3 with notebooks `3aKNN.ipynb` and `3bKNN.ipynb`; Linear Regres
 
 The combined notebook and Python answer traces can be checked with `python3 scripts/verify_polynomial_notebook.py` after installing NumPy, pandas, matplotlib, scikit-learn, nbformat, and the app's npm dependencies. This executes the notebook and checks the actual app answer choices against its classes.
 
+## Conceptual gradient descent assignment
+
+Gradient Descent (Homework 6, ID `gradient-descent`, version 2) has five conceptual/visual warm-ups followed by the unchanged notebook lab. The learning-rate exercise records the chosen rate, final parameters, and final loss. The grader recomputes all 20 updates from the fixed starting point and accepts any available rate that reaches loss ≤ 1.05; submitted loss, parameters, and step counts cannot override that check. Multiple-choice parts and notebook fields receive independent partial credit.
+
+Upload the rebuilt `gradescope/dist/gradient-descent.zip` when publishing these changes. It also retains the original version-1 answer key for students who already exported the previous five-question assignment. Do not change the version tag in a student's JSON.
+
 ## Local runner paths
 
 On Gradescope, the runner uses the official paths:

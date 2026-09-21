@@ -2,6 +2,10 @@ import { useState } from 'react'
 import { QuestionFrame } from '../QuestionFrame'
 import { RegressionVisual } from './RegressionVisual'
 import { GradientVisual } from './GradientVisual'
+import { BatchGradientVisual } from './BatchGradientVisual'
+import { RegularizationVisual } from './RegularizationVisual'
+import { LogisticVisual } from './LogisticVisual'
+import { SoftmaxVisual } from './SoftmaxVisual'
 import type {
   AttemptOutcome,
   MultipleChoiceQuestionSpec,
@@ -185,6 +189,10 @@ function DatasetPanel({
 }) {
   if (dataset.kind === 'regressionVisual') return <RegressionVisual dataset={dataset} />
   if (dataset.kind === 'gradientVisual') return <GradientVisual dataset={dataset} />
+  if (dataset.kind === 'batchGradientVisual') return <BatchGradientVisual dataset={dataset} />
+  if (dataset.kind === 'regularizationVisual') return <RegularizationVisual dataset={dataset} />
+  if (dataset.kind === 'logisticVisual') return <LogisticVisual dataset={dataset} />
+  if (dataset.kind === 'softmaxVisual') return <SoftmaxVisual dataset={dataset} />
   if (dataset.kind === 'table') {
     const tableDataset = dataset as MultipleChoiceTableDataset
     return (
@@ -332,7 +340,7 @@ export function MultipleChoiceQuestion({
         </button>
       }
     >
-      <div className="table-shell" style={dataset.kind === 'gradientVisual' || (dataset.kind === 'regressionVisual' && dataset.mode === 'curves') ? { gridTemplateColumns: '1fr' } : undefined}>
+      <div className="table-shell" style={dataset.kind === 'gradientVisual' || dataset.kind === 'batchGradientVisual' || dataset.kind === 'regularizationVisual' || dataset.kind === 'logisticVisual' || dataset.kind === 'softmaxVisual' || (dataset.kind === 'regressionVisual' && dataset.mode === 'curves') ? { gridTemplateColumns: '1fr' } : undefined}>
         <DatasetPanel dataset={dataset} resolved={showComparison} />
 
         <section className="answer-panel">

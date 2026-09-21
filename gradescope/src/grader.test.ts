@@ -5,6 +5,7 @@ import { gradeSubmission } from './grader'
 import { createReferenceSubmission } from './referenceSubmissions'
 import { kmeansVersion6Assignment } from './assignmentVersions'
 import { gradientDescentVersion1Assignment } from './gradientDescentVersion1'
+import { laterAssignmentsVersion1 } from './laterAssignmentsVersion1'
 
 function cloneSubmission(submission: SubmissionExport): SubmissionExport {
   return JSON.parse(JSON.stringify(submission)) as SubmissionExport
@@ -18,6 +19,31 @@ function configFor(assignment: (typeof publishedAssignments)[number]) {
 }
 
 describe('Gradescope grader', () => {
+  it('keeps homework 7–10 version-1 exports gradeable after the conceptual rewrites', () => {
+    for(const old of Object.values(laterAssignmentsVersion1)) {
+      const current=publishedAssignments.find(a=>a.id===old.id)!
+      expect(current.version).toBe(2)
+      expect(gradeSubmission(configFor(current),createReferenceSubmission(old)).score).toBe(100)
+      const mislabeled=createReferenceSubmission(old)
+      mislabeled.assignmentVersion=2
+      expect(gradeSubmission(configFor(current),mislabeled).score).toBeLessThan(100)
+    }
+  })
+  it('recomputes regularization and logistic tuning answers and awards partial work independently', () => {
+    for(const [id,kind,good,bad] of [
+      ['regularization','regularizationTuning',{strengthIndex:1},{strengthIndex:0,validationMse:0}],
+      ['logistic-regression','logisticThreshold',{threshold:.4},{threshold:.95,precision:1,recall:1}],
+    ] as const) {
+      const assignment=publishedAssignments.find(a=>a.id===id)!
+      const submission=createReferenceSubmission(assignment)
+      submission.questions.forEach(q=>{q.latestAnswer=null;q.attemptHistory=[];q.status='gave_up'})
+      const index=assignment.questions.findIndex(q=>q.kind===kind)
+      submission.questions[index].latestAnswer=good
+      expect(gradeSubmission(configFor(assignment),submission).score).toBeCloseTo(100/assignment.questions.length,2)
+      submission.questions[index].latestAnswer=bad
+      expect(gradeSubmission(configFor(assignment),submission).score).toBe(0)
+    }
+  })
   it('grades both gradient-descent versions and recomputes learning-rate success from raw answers', () => {
     const assignment = publishedAssignments.find(a => a.id === 'gradient-descent')!
     expect(assignment.questions).toHaveLength(6)

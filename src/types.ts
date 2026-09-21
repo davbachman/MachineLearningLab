@@ -1,4 +1,6 @@
 import type { CodeLabQuestionSpec } from './lib/codeLab'
+import type { RegularizationTuningQuestionSpec } from './data/regularizationAssignment'
+import type { LogisticThresholdQuestionSpec } from './data/logisticAssignment'
 
 export type Vec2 = [number, number]
 export type Vec3 = [number, number, number]
@@ -22,6 +24,8 @@ export type QuestionKind =
   | 'planeFit'
   | 'polynomialDegree'
   | 'gradientDescent'
+  | 'regularizationTuning'
+  | 'logisticThreshold'
 export type QuestionStatus = 'locked' | 'active' | 'correct' | 'gave_up'
 export type AttemptOutcome = 'incorrect' | 'progress' | 'correct'
 
@@ -165,6 +169,8 @@ export interface PolynomialDegreeQuestionSpec extends BaseQuestionSpec<'polynomi
 }
 
 export type QuestionSpec =
+  | RegularizationTuningQuestionSpec
+  | LogisticThresholdQuestionSpec
   | GradientDescentQuestionSpec
   | PolynomialDegreeQuestionSpec
   | PlaneFitQuestionSpec

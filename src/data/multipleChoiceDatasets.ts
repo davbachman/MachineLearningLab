@@ -1,5 +1,9 @@
 import type { DistanceMetric, Vec2 } from '../types'
 import { assignPointsToCentroids } from '../lib/kmeansMath'
+import { batchGradientVisualDatasets, type BatchGradientVisualDataset } from './batchGradientAssignment'
+import { regularizationVisualDatasets, type RegularizationVisualDataset } from './regularizationAssignment'
+import { logisticVisualDatasets, type LogisticVisualDataset } from './logisticAssignment'
+import { softmaxVisualDatasets, type SoftmaxVisualDataset } from './softmaxAssignment'
 
 export interface MultipleChoiceTableDataset {
   id: string
@@ -50,6 +54,10 @@ export interface RegressionVisualDataset {
 }
 
 export type MultipleChoiceDataset =
+  | BatchGradientVisualDataset
+  | RegularizationVisualDataset
+  | LogisticVisualDataset
+  | SoftmaxVisualDataset
   | GradientVisualDataset
   | MultipleChoiceTableDataset
   | MultipleChoicePointCloudScenariosDataset
@@ -114,6 +122,10 @@ const metricPoints: Vec2[] = [
 ]
 
 export const multipleChoiceDatasets: Record<string, MultipleChoiceDataset> = {
+  ...batchGradientVisualDatasets,
+  ...regularizationVisualDatasets,
+  ...logisticVisualDatasets,
+  ...softmaxVisualDatasets,
   gradientSlopes: { id: 'gradientSlopes', kind: 'gradientVisual', mode: 'slopes', caption: 'Loss L(w) = (w − 1)² + 1. Orange segments show tangent slopes. A is at w = −2, B at w = 1, and C at w = 3.' },
   gradientContours: { id: 'gradientContours', kind: 'gradientVisual', mode: 'contours', caption: 'L(a, b) = 1 + (a − 1)² + 4(b + 1)². S marks the current parameters (−2, 1); the × marks the minimum. Numbers on contours are loss values.' },
   gradientRuns: { id: 'gradientRuns', kind: 'gradientVisual', mode: 'runs', caption: 'The same quadratic loss and start as Questions 2–3. All panels use identical axes. Step 0 is before any update; the minimum possible loss is 1.' },

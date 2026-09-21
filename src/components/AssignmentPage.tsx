@@ -21,6 +21,8 @@ import { Pca2DQuestion } from './questions/Pca2DQuestion'
 import { LinearFitQuestion } from './questions/LinearFitQuestion'
 import { PolynomialDegreeQuestion } from './questions/PolynomialDegreeQuestion'
 import { GradientDescentQuestion } from './questions/GradientDescentQuestion'
+import { RegularizationTuningQuestion } from './questions/RegularizationTuningQuestion'
+import { LogisticThresholdQuestion } from './questions/LogisticThresholdQuestion'
 import { TableEntryQuestion } from './questions/TableEntryQuestion'
 import { CodeLabQuestion } from './questions/CodeLabQuestion'
 import type { CodeLabSubmission } from '../lib/codeLab'
@@ -168,6 +170,16 @@ export function AssignmentPage({ assignment }: AssignmentPageProps) {
           </aside>
 
           <section className="question-strip">
+            {currentQuestion.kind === 'regularizationTuning' ? (
+              <RegularizationTuningQuestion key={currentQuestion.id} question={currentQuestion} state={currentQuestionState}
+                questionNumber={activeViewIndex + 1} totalQuestions={assignment.questions.length}
+                hints={hints} onAttempt={handleAttempt} />
+            ) : null}
+            {currentQuestion.kind === 'logisticThreshold' ? (
+              <LogisticThresholdQuestion key={currentQuestion.id} question={currentQuestion} state={currentQuestionState}
+                questionNumber={activeViewIndex + 1} totalQuestions={assignment.questions.length}
+                hints={hints} onAttempt={handleAttempt} />
+            ) : null}
             {currentQuestion.kind === 'gradientDescent' ? (
               <GradientDescentQuestion key={currentQuestion.id} question={currentQuestion} state={currentQuestionState}
                 questionNumber={activeViewIndex + 1} totalQuestions={assignment.questions.length}

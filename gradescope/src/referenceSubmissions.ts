@@ -354,6 +354,10 @@ function knnPhases(question: Extract<QuestionSpec, { kind: 'knn2d' }>): Referenc
 
 function phasesForQuestion(question: QuestionSpec): ReferencePhase[] {
   switch (question.kind) {
+    case 'regularizationTuning':
+      return [{ answer: { strengthIndex: 1 } }]
+    case 'logisticThreshold':
+      return [{ answer: { threshold: 0.4 } }]
     case 'gradientDescent':
       return [{ answer: { learningRate: 0.12 } }]
     case 'polynomialDegree':

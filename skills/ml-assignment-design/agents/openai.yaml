@@ -1,0 +1,4 @@
+interface:
+  display_name: "ML Assignment Design"
+  short_description: "Conceptual ML assignments and notebook labs"
+  default_prompt: "Use $ml-assignment-design to design or revise a visual, automatically gradable Machine Learning Lab assignment."

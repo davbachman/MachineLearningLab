@@ -53,13 +53,16 @@ describe('notebook-backed assignments', () => {
     for (const [assignment, displayNumber, filename] of expectedAssignments) {
       expect(assignment.published).toBe(true)
       expect(assignment.displayNumber).toBe(displayNumber)
-      expect(assignment.questions.map((question) => question.kind)).toEqual(assignment.id === 'linear-regression' ? ['linearFit', 'planeFit', 'codeLab'] : assignment.id === 'polynomial-regression' ? ['multipleChoice', 'polynomialDegree', 'polynomialDegree', 'multipleChoice', 'multipleChoice', 'codeLab', 'codeLab'] : assignment.id === 'gradient-descent' ? ['multipleChoice', 'multipleChoice', 'gradientDescent', 'multipleChoice', 'multipleChoice', 'codeLab'] : [
-        'multipleChoice',
-        'multipleChoice',
-        'multipleChoice',
-        'multipleChoice',
-        'codeLab',
-      ])
+      const expectedKinds: Record<string, string[]> = {
+        'linear-regression': ['linearFit','planeFit','codeLab'],
+        'polynomial-regression': ['multipleChoice','polynomialDegree','polynomialDegree','multipleChoice','multipleChoice','codeLab','codeLab'],
+        'gradient-descent': ['multipleChoice','multipleChoice','gradientDescent','multipleChoice','multipleChoice','codeLab'],
+        'batch-gradient-descent': ['multipleChoice','multipleChoice','multipleChoice','multipleChoice','multipleChoice','codeLab'],
+        regularization: ['multipleChoice','regularizationTuning','multipleChoice','multipleChoice','multipleChoice','codeLab'],
+        'logistic-regression': ['multipleChoice','multipleChoice','logisticThreshold','multipleChoice','codeLab'],
+        softmax: ['multipleChoice','multipleChoice','multipleChoice','multipleChoice','multipleChoice','codeLab'],
+      }
+      expect(assignment.questions.map((question) => question.kind)).toEqual(expectedKinds[assignment.id])
       const lab = assignment.questions[assignment.questions.length - 1]
       expect(lab.prompt).toContain(filename)
     }
@@ -68,6 +71,16 @@ describe('notebook-backed assignments', () => {
   it('accepts the fixed answer IDs and rejects a changed answer in every question', () => {
     for (const assignment of notebookAssignments) {
       for (const question of assignment.questions) {
+        if (question.kind === 'regularizationTuning') {
+          expect(question.validator({strengthIndex:1}).correct).toBe(true)
+          expect(question.validator({strengthIndex:0}).correct).toBe(false)
+          continue
+        }
+        if (question.kind === 'logisticThreshold') {
+          expect(question.validator({threshold:0.4}).correct).toBe(true)
+          expect(question.validator({threshold:0.95}).correct).toBe(false)
+          continue
+        }
         if (question.kind === 'gradientDescent') {
           expect(question.validator({ learningRate: 0.12 }).correct).toBe(true)
           expect(question.validator({ learningRate: question.initialLearningRate }).correct).toBe(false)

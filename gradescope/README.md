@@ -75,6 +75,12 @@ Gradient Descent (Homework 6, ID `gradient-descent`, version 2) has five concept
 
 Upload the rebuilt `gradescope/dist/gradient-descent.zip` when publishing these changes. It also retains the original version-1 answer key for students who already exported the previous five-question assignment. Do not change the version tag in a student's JSON.
 
+## Conceptual assignments 7–10
+
+Homework 7 (Batch Gradient Descent), 8 (Regularization), 9 (Logistic Regression), and 10 (Softmax) now use version 2. Each begins with self-contained visual/conceptual questions and ends with its unchanged notebook lab. Batch-size/replay controls and the exploratory plots support fixed-reference conceptual questions. The scored regularization slider submits its strength index; the scored logistic-threshold slider submits its threshold. Both graders independently recompute performance from fixed observations, and accept all tied valid optima under the displayed rules rather than trusting submitted metrics.
+
+Upload the newly rebuilt `batch-gradient-descent.zip`, `regularization.zip`, `logistic-regression.zip`, and `softmax.zip` from `gradescope/dist/` when publishing these assignments. Each package also supports its original version-1 questions with the preserved answer key, so previously exported submissions do not need their version tags changed. Current question counts are 6, 6, 5, and 6 respectively; each question receives an equal share of 100 points, with independent parts and notebook fields receiving partial credit.
+
 ## Local runner paths
 
 On Gradescope, the runner uses the official paths:
